@@ -6,9 +6,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/huybui/cc-hud-go/config"
+	"github.com/huybui/cc-hud-go/internal/git"
 	"github.com/huybui/cc-hud-go/internal/watcher"
 	"github.com/huybui/cc-hud-go/output"
 	"github.com/huybui/cc-hud-go/parser"
@@ -31,10 +33,20 @@ type transcriptMsg struct {
 	line string
 }
 
+type tickMsg time.Time
+
 func initialModel() model {
+	home, _ := os.UserHomeDir()
+	configPath := filepath.Join(home, ".claude", "cc-hud-go", "config.json")
+
+	cfg, err := config.LoadFromFile(configPath)
+	if err != nil {
+		cfg = config.Default()
+	}
+
 	return model{
 		state:    state.New(),
-		config:   config.Default(),
+		config:   cfg,
 		segments: segment.All(),
 	}
 }
@@ -66,6 +78,12 @@ func watchTranscriptCmd() tea.Cmd {
 	}
 }
 
+func tickCmd() tea.Cmd {
+	return tea.Tick(5*time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
 func outputCmd(m model) tea.Cmd {
 	return func() tea.Msg {
 		json, err := output.Render(m.state, m.config)
@@ -80,7 +98,7 @@ func outputCmd(m model) tea.Cmd {
 }
 
 func (m model) Init() tea.Cmd {
-	return readStdinCmd()
+	return tea.Batch(readStdinCmd(), watchTranscriptCmd(), tickCmd())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -113,6 +131,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			fmt.Fprintf(os.Stderr, "transcript parse error: %v\n", err)
 		}
 		return m, tea.Batch(outputCmd(m), watchTranscriptCmd())
+
+	case tickMsg:
+		// Update git info
+		if branch, err := git.GetBranch(); err == nil {
+			m.state.Git.Branch = branch
+		}
+
+		if status, err := git.GetStatus(); err == nil {
+			m.state.Git.DirtyFiles = status.DirtyFiles
+			m.state.Git.Ahead = status.Ahead
+			m.state.Git.Behind = status.Behind
+			m.state.Git.Added = status.Added
+			m.state.Git.Modified = status.Modified
+			m.state.Git.Deleted = status.Deleted
+		}
+
+		return m, tea.Batch(outputCmd(m), tickCmd())
 	}
 
 	return m, nil
