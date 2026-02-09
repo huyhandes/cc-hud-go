@@ -1,2 +1,24 @@
 # Worktrees
 .worktrees/
+
+# Binaries
+cc-hud-go
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test coverage
+*.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
