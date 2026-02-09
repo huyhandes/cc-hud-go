@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/huybui/cc-hud-go/config"
+	"github.com/huybui/cc-hud-go/internal/watcher"
 	"github.com/huybui/cc-hud-go/output"
 	"github.com/huybui/cc-hud-go/parser"
 	"github.com/huybui/cc-hud-go/segment"
@@ -25,6 +27,10 @@ type stdinMsg struct {
 	err  error
 }
 
+type transcriptMsg struct {
+	line string
+}
+
 func initialModel() model {
 	return model{
 		state:    state.New(),
@@ -38,6 +44,25 @@ func readStdinCmd() tea.Cmd {
 		reader := bufio.NewReader(os.Stdin)
 		line, err := reader.ReadBytes('\n')
 		return stdinMsg{data: line, err: err}
+	}
+}
+
+func watchTranscriptCmd() tea.Cmd {
+	return func() tea.Msg {
+		// Find transcript file (simplified - in production would query Claude Code)
+		home, _ := os.UserHomeDir()
+		transcriptPath := filepath.Join(home, ".claude", "transcript.jsonl")
+
+		lines := make(chan string, 10)
+		stop := make(chan struct{})
+
+		go func() {
+			watcher.Watch(transcriptPath, lines, stop)
+		}()
+
+		// Read one line
+		line := <-lines
+		return transcriptMsg{line: line}
 	}
 }
 
@@ -82,6 +107,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Output JSON and read next line
 		return m, tea.Batch(outputCmd(m), readStdinCmd())
+
+	case transcriptMsg:
+		if err := parser.ParseTranscriptLine([]byte(msg.line), m.state); err != nil {
+			fmt.Fprintf(os.Stderr, "transcript parse error: %v\n", err)
+		}
+		return m, tea.Batch(outputCmd(m), watchTranscriptCmd())
 	}
 
 	return m, nil
