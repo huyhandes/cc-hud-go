@@ -23,6 +23,6 @@ func (d dummySegment) Render(s *state.State, cfg *config.Config) (string, error)
 // All returns all available segments
 func All() []Segment {
 	return []Segment{
-		dummySegment{},
+		&ModelSegment{},
 	}
 }
