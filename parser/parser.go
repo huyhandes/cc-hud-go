@@ -2,9 +2,32 @@ package parser
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/huybui/cc-hud-go/state"
 )
+
+type ToolCategory int
+
+const (
+	CategoryApp ToolCategory = iota
+	CategoryInternal
+	CategoryCustom
+	CategoryMCP
+	CategorySkill
+)
+
+var appTools = map[string]bool{
+	"read":      true,
+	"write":     true,
+	"edit":      true,
+	"bash":      true,
+	"glob":      true,
+	"grep":      true,
+	"task":      true,
+	"webfetch":  true,
+	"websearch": true,
+}
 
 // StdinData represents the JSON structure from Claude Code
 type StdinData struct {
@@ -46,4 +69,32 @@ func ParseStdin(data []byte, s *state.State) error {
 	}
 
 	return nil
+}
+
+// CategorizeTool determines the category of a tool by name
+func CategorizeTool(name string) ToolCategory {
+	lower := strings.ToLower(name)
+
+	// Check for MCP pattern
+	if strings.HasPrefix(lower, "mcp__") {
+		return CategoryMCP
+	}
+
+	// Check for Skill
+	if lower == "skill" {
+		return CategorySkill
+	}
+
+	// Check for internal (Bash is special) - must check before appTools
+	if lower == "bash" {
+		return CategoryInternal
+	}
+
+	// Check for app tools
+	if appTools[lower] {
+		return CategoryApp
+	}
+
+	// Everything else is custom
+	return CategoryCustom
 }
