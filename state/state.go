@@ -21,9 +21,14 @@ type ModelInfo struct {
 }
 
 type ContextInfo struct {
-	UsedTokens  int
-	TotalTokens int
-	Percentage  float64
+	UsedTokens         int
+	TotalTokens        int
+	Percentage         float64
+	TotalInputTokens   int
+	TotalOutputTokens  int
+	CacheReadTokens    int
+	CacheCreateTokens  int
+	CurrentInputTokens int
 }
 
 type RateLimitInfo struct {

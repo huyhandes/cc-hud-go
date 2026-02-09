@@ -97,17 +97,21 @@ func ParseStdin(data []byte, s *state.State) error {
 	s.Model.PlanType = ""
 
 	// Update context - use current usage if available, otherwise use totals
+	s.Context.TotalInputTokens = stdin.ContextWindow.TotalInputTokens
+	s.Context.TotalOutputTokens = stdin.ContextWindow.TotalOutputTokens
+	s.Context.TotalTokens = stdin.ContextWindow.ContextWindowSize
+
 	if stdin.ContextWindow.CurrentUsage != nil {
 		// Calculate used tokens from current usage (input only, as per docs)
-		usedTokens := stdin.ContextWindow.CurrentUsage.InputTokens +
-			stdin.ContextWindow.CurrentUsage.CacheCreationInputTokens +
-			stdin.ContextWindow.CurrentUsage.CacheReadInputTokens
+		s.Context.CurrentInputTokens = stdin.ContextWindow.CurrentUsage.InputTokens
+		s.Context.CacheCreateTokens = stdin.ContextWindow.CurrentUsage.CacheCreationInputTokens
+		s.Context.CacheReadTokens = stdin.ContextWindow.CurrentUsage.CacheReadInputTokens
+
+		usedTokens := s.Context.CurrentInputTokens + s.Context.CacheCreateTokens + s.Context.CacheReadTokens
 		s.Context.UsedTokens = usedTokens
-		s.Context.TotalTokens = stdin.ContextWindow.ContextWindowSize
 	} else {
 		// Fallback to total tokens
 		s.Context.UsedTokens = stdin.ContextWindow.TotalInputTokens
-		s.Context.TotalTokens = stdin.ContextWindow.ContextWindowSize
 	}
 
 	// Update agent info if present

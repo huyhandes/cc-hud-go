@@ -38,29 +38,63 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		icon = "🟡"
 	}
 
-	// Build enhanced progress bar with gradient effect
+	// Build enhanced progress bar
 	barWidth := 10
 	filled := int(percentage / 10)
 	if filled > barWidth {
 		filled = barWidth
 	}
 
-	// Use different characters for better visual effect
 	filledBar := strings.Repeat("●", filled)
 	emptyBar := strings.Repeat("○", barWidth-filled)
 	bar := filledBar + emptyBar
 
-	var display string
-	if cfg.ContextValue == "tokens" {
-		display = fmt.Sprintf("%dk/%dk", s.Context.UsedTokens/1000, s.Context.TotalTokens/1000)
-	} else {
-		display = fmt.Sprintf("%.0f%%", percentage)
+	// Format tokens in thousands (k)
+	formatTokens := func(tokens int) string {
+		if tokens >= 1000 {
+			return fmt.Sprintf("%dk", tokens/1000)
+		}
+		return fmt.Sprintf("%d", tokens)
 	}
 
-	// Format with icon and styled bar
-	return fmt.Sprintf("%s %s %s",
+	// Main display with bar and percentage
+	mainDisplay := fmt.Sprintf("%s %s %s",
 		icon,
 		barStyle.Render(bar),
-		style.ContextStyle.Render(display),
-	), nil
+		style.ContextStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
+	)
+
+	// Detailed token breakdown
+	details := []string{}
+
+	// Input/Output tokens
+	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+	details = append(details,
+		fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))),
+	)
+	details = append(details,
+		fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))),
+	)
+
+	// Cache stats if available
+	if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
+		cacheStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCyan)
+		details = append(details,
+			fmt.Sprintf("💾 %s", cacheStyle.Render(
+				fmt.Sprintf("R:%s W:%s",
+					formatTokens(s.Context.CacheReadTokens),
+					formatTokens(s.Context.CacheCreateTokens),
+				),
+			)),
+		)
+	}
+
+	// Total context size
+	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
+	details = append(details,
+		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),
+	)
+
+	return fmt.Sprintf("%s %s", mainDisplay, strings.Join(details, " ")), nil
 }
