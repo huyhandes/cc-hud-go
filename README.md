@@ -17,6 +17,7 @@ A Go-based statusline tool for [Claude Code](https://code.claude.com) that displ
 - **Model Information** - Current Claude model and plan type
 - **Context Usage** - Token usage with color-coded thresholds (green/yellow/red)
 - **Rate Limits** - 7-day API usage tracking with visual warnings
+- **Cost Tracking** - Session cost (USD), duration, and code changes (lines added/removed)
 - **Session Stats** - Duration and token processing speed
 
 ### 🔧 Development Insights
@@ -66,10 +67,15 @@ Available builds:
 git clone git@github.com:huyhandes/cc-hud-go.git
 cd cc-hud-go
 
-# Build the binary
+# Build with version info (using Make - recommended)
+make build
+
+# Or build manually
 go build -o cc-hud-go .
 
-# Move to PATH (optional)
+# Install to GOPATH/bin (optional)
+make install
+# Or move to PATH manually
 sudo mv cc-hud-go /usr/local/bin/
 ```
 
@@ -100,12 +106,30 @@ The tool reads session data from stdin (provided by Claude Code) and outputs for
 For testing or development:
 
 ```bash
-# With stdin data
-echo '{"model":"claude-sonnet-4.5","context":{"used":5000,"total":10000}}' | cc-hud-go
-
-# View help
+# View help (shows usage, configuration, examples)
 cc-hud-go --help
+cc-hud-go -h
+
+# Check version (auto-detects from git tags or shows release version)
+cc-hud-go --version
+cc-hud-go -v
+
+# Test with sample stdin data
+echo '{"model":"claude-sonnet-4.5","context":{"used":5000,"total":10000}}' | cc-hud-go
 ```
+
+**Version Information:**
+- Release builds: Shows the tagged version (e.g., `v0.1.0`)
+- Development builds: Auto-detects from `git describe` (e.g., `v0.1.0-dirty`)
+- Without git: Falls back to `dev`
+
+The `--help` flag displays comprehensive usage information including:
+- Command syntax and description
+- Available command-line options
+- Configuration file location and presets
+- Integration instructions for Claude Code
+- Usage examples
+- Links to documentation and issue tracker
 
 ## Configuration
 
@@ -214,32 +238,42 @@ All boolean flags to enable/disable segments:
 
 ```
 cc-hud-go/
-├── config/          # Configuration management
+├── config/          # Configuration management with presets
 │   ├── config.go
 │   └── config_test.go
-├── state/           # Session state tracking
+├── state/           # Session state tracking and derived fields
 │   ├── state.go
 │   └── state_test.go
-├── parser/          # Input parsing (stdin & transcript)
+├── parser/          # Dual input parsing (stdin JSON & transcript JSONL)
 │   ├── parser.go
 │   ├── stdin_test.go
 │   └── transcript_test.go
-├── segment/         # Display segments
+├── segment/         # Modular display segments
 │   ├── segment.go   # Segment interface & registry
-│   ├── model.go     # Model segment
-│   ├── context.go   # Context segment
-│   ├── git.go       # Git segment
-│   ├── tools.go     # Tools segment
-│   ├── tasks.go     # Tasks segment
-│   ├── agent.go     # Agent segment
-│   ├── ratelimit.go # Rate limit segment
+│   ├── model.go     # Model and plan type display
+│   ├── context.go   # Token usage and context window
+│   ├── git.go       # Git branch, status, file stats
+│   ├── cost.go      # Cost tracking and code metrics
+│   ├── tools.go     # Tool usage categorization
+│   ├── tasks.go     # Task progress tracking
+│   ├── agent.go     # Active agent and task info
+│   ├── ratelimit.go # API rate limit monitoring
 │   └── *_test.go
-├── output/          # JSON output renderer
+├── output/          # JSON output renderer for statusline API
 │   ├── renderer.go
 │   └── renderer_test.go
+├── style/           # Lipgloss styling with semantic color system
+│   └── style.go
 ├── internal/
-│   ├── git/         # Git integration
+│   ├── git/         # Git integration via command execution
+│   │   ├── git.go
+│   │   └── git_test.go
 │   └── watcher/     # File watching utilities
+│       └── watcher.go
+├── testdata/        # Test fixtures and sample data
+├── docs/            # Documentation and planning
+│   └── COLOR_SCHEME.md
+├── assets/          # Screenshots and preview images
 ├── main.go          # Application entry point
 └── go.mod
 ```
@@ -255,22 +289,45 @@ type Segment interface {
 }
 ```
 
-**State** - Centralized session state with automatic derived field calculation
+Available segments:
+- `ModelSegment` - Current Claude model and plan type
+- `ContextSegment` - Token usage with color-coded thresholds
+- `GitSegment` - Branch, dirty files, ahead/behind, file stats
+- `CostSegment` - Cost tracking, duration, lines changed
+- `ToolsSegment` - Tool usage categorized by type (App/MCP/Skills/Custom)
+- `TasksSegment` - Task completion progress
+- `AgentSegment` - Active agent name and current task
+- `RateLimitSegment` - 7-day API usage tracking
+
+**State** - Centralized session state with automatic derived field calculation:
+- Context percentage calculation
+- Session duration tracking
+- Tool usage categorization
+- Task progress aggregation
 
 **Parser** - Dual parsing system:
 - Stdin parser for Claude Code session data (JSON)
 - Transcript parser for tool usage tracking (JSONL)
+
+**Style System** - Semantic color palette using Lipgloss:
+- Status colors (green/yellow/red for thresholds)
+- Flow colors (blue for input, emerald for output)
+- Cache colors (purple for reads, pink for writes)
+- Primary UI colors (purple, cyan, orange)
+- TrueColor support with forced color output
 
 **Renderer** - JSON output formatter for Claude Code statusline API
 
 ### Design Principles
 
 Built with the [Charm](https://charm.sh) ecosystem:
-- Event-driven architecture using [Bubble Tea](https://github.com/charmbracelet/bubbletea)
 - Clean, elegant terminal styling with [Lipgloss](https://github.com/charmbracelet/lipgloss)
 - Composable segment architecture
+- Clean separation between state, rendering, and configuration
 - Graceful degradation (missing config → defaults)
 - Comprehensive test coverage with TDD approach
+- Semantic color system with meaningful associations
+- Modular design inspired by [Bubble Tea](https://github.com/charmbracelet/bubbletea) and [Gum](https://github.com/charmbracelet/gum) patterns
 
 ## Development
 
@@ -290,10 +347,31 @@ cd cc-hud-go
 go mod download
 
 # Run tests
-go test ./...
+make test
 
-# Build
+# Build with version info
+make build
+
+# Or build manually
 go build -o cc-hud-go .
+```
+
+### Make Commands
+
+The project includes a Makefile for common development tasks:
+
+```bash
+make help            # Show all available commands
+make build           # Build with version from git tags
+make test            # Run all tests
+make test-coverage   # Run tests with coverage
+make check           # Run fmt, vet, and test
+make fmt             # Format code
+make vet             # Run go vet
+make lint            # Run golangci-lint
+make clean           # Remove build artifacts
+make install         # Install to GOPATH/bin
+make build-all       # Build for all platforms
 ```
 
 ### Creating a Release

@@ -54,7 +54,7 @@ jobs:
             fi
 
             echo "Building for $GOOS/$GOARCH..."
-            env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }}" -o "dist/${output_name}" .
+            env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-s -w -X github.com/huybui/cc-hud-go/version.Version=${{ steps.version.outputs.version }}" -o "dist/${output_name}" .
 
             # Create archives
             if [ "$GOOS" = "windows" ]; then
