@@ -73,3 +73,33 @@ func Default() *Config {
 		},
 	}
 }
+
+// Essential returns a config with core metrics only
+func Essential() *Config {
+	cfg := Default()
+	cfg.Preset = "essential"
+	cfg.LineLayout = "compact"
+	cfg.Display.Tools = false
+	cfg.Display.Agents = false
+	cfg.Display.RateLimits = false
+	cfg.Display.Duration = false
+	cfg.Display.Speed = false
+	return cfg
+}
+
+// Minimal returns a config with minimal information
+func Minimal() *Config {
+	cfg := Default()
+	cfg.Preset = "minimal"
+	cfg.LineLayout = "compact"
+	cfg.PathLevels = 1
+	cfg.Display.Path = false
+	cfg.Display.Git = false
+	cfg.Display.Tools = false
+	cfg.Display.Agents = false
+	cfg.Display.Tasks = false
+	cfg.Display.RateLimits = false
+	cfg.Display.Duration = false
+	cfg.Display.Speed = false
+	return cfg
+}
