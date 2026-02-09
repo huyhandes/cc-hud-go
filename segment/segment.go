@@ -29,5 +29,6 @@ func All() []Segment {
 		&ToolsSegment{},
 		&TasksSegment{},
 		&AgentSegment{},
+		&RateLimitSegment{},
 	}
 }
