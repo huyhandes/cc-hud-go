@@ -23,7 +23,7 @@ A Go-based statusline tool for [Claude Code](https://code.claude.com) that displ
 - **Multiple Presets** - Full, Essential, and Minimal display modes
 - **Granular Control** - Enable/disable individual segments
 - **Customizable Thresholds** - Configure warning levels for context and rate limits
-- **JSON Configuration** - Easy configuration via `~/.config/cc-hud-go/config.json`
+- **JSON Configuration** - Easy configuration via `~/.claude/cc-hud-go/config.json`
 
 ## Installation
 
@@ -79,7 +79,7 @@ cc-hud-go --help
 
 ### Configuration File
 
-Create `~/.config/cc-hud-go/config.json`:
+Create `~/.claude/cc-hud-go/config.json`:
 
 ```json
 {
@@ -233,11 +233,12 @@ type Segment interface {
 
 ### Design Principles
 
-Built with the [Charm](https://charm.sh) ecosystem style:
-- Clean, elegant terminal UI using [Lipgloss](https://github.com/charmbracelet/lipgloss)
+Built with the [Charm](https://charm.sh) ecosystem:
+- Event-driven architecture using [Bubble Tea](https://github.com/charmbracelet/bubbletea)
+- Clean, elegant terminal styling with [Lipgloss](https://github.com/charmbracelet/lipgloss)
 - Composable segment architecture
 - Graceful degradation (missing config → defaults)
-- Comprehensive test coverage
+- Comprehensive test coverage with TDD approach
 
 ## Development
 
@@ -271,6 +272,9 @@ go test ./...
 
 # With coverage
 go test -cover ./...
+
+# Integration tests
+go test -tags=integration -v .
 
 # Specific package
 go test ./segment -v
