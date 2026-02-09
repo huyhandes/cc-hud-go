@@ -1,11 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/huybui/cc-hud-go/config"
+	"github.com/huybui/cc-hud-go/output"
+	"github.com/huybui/cc-hud-go/parser"
 	"github.com/huybui/cc-hud-go/segment"
 	"github.com/huybui/cc-hud-go/state"
 )
@@ -16,6 +20,11 @@ type model struct {
 	segments []segment.Segment
 }
 
+type stdinMsg struct {
+	data []byte
+	err  error
+}
+
 func initialModel() model {
 	return model{
 		state:    state.New(),
@@ -24,8 +33,29 @@ func initialModel() model {
 	}
 }
 
+func readStdinCmd() tea.Cmd {
+	return func() tea.Msg {
+		reader := bufio.NewReader(os.Stdin)
+		line, err := reader.ReadBytes('\n')
+		return stdinMsg{data: line, err: err}
+	}
+}
+
+func outputCmd(m model) tea.Cmd {
+	return func() tea.Msg {
+		json, err := output.Render(m.state, m.config)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "render error: %v\n", err)
+			return nil
+		}
+
+		fmt.Println(json)
+		return nil
+	}
+}
+
 func (m model) Init() tea.Cmd {
-	return nil
+	return readStdinCmd()
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -34,7 +64,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
+
+	case stdinMsg:
+		if msg.err != nil {
+			if msg.err == io.EOF {
+				return m, tea.Quit
+			}
+			// Log error but continue
+			fmt.Fprintf(os.Stderr, "stdin error: %v\n", msg.err)
+			return m, readStdinCmd()
+		}
+
+		// Parse and update state
+		if err := parser.ParseStdin(msg.data, m.state); err != nil {
+			fmt.Fprintf(os.Stderr, "parse error: %v\n", err)
+		}
+
+		// Output JSON and read next line
+		return m, tea.Batch(outputCmd(m), readStdinCmd())
 	}
+
 	return m, nil
 }
 
@@ -43,7 +92,12 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	// Run without alternate screen and without mouse since we're a statusline tool
+	p := tea.NewProgram(
+		initialModel(),
+		tea.WithInput(nil),
+		tea.WithoutRenderer(),
+	)
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
