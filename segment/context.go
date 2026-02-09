@@ -4,15 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
-)
-
-var (
-	greenStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	yellowStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
-	redStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	"github.com/huybui/cc-hud-go/style"
 )
 
 type ContextSegment struct{}
@@ -32,31 +26,41 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 
 	percentage := s.Context.Percentage
 
-	// Choose color based on thresholds
-	var style lipgloss.Style
-	if percentage < 70 {
-		style = greenStyle
-	} else if percentage < 90 {
-		style = yellowStyle
-	} else {
-		style = redStyle
+	// Choose style and icon based on thresholds
+	var barStyle = style.ProgressGood
+	var icon = "🟢"
+
+	if percentage >= 90 {
+		barStyle = style.ProgressDanger
+		icon = "🔴"
+	} else if percentage >= 70 {
+		barStyle = style.ProgressWarning
+		icon = "🟡"
 	}
 
-	// Build progress bar
+	// Build enhanced progress bar with gradient effect
 	barWidth := 10
 	filled := int(percentage / 10)
 	if filled > barWidth {
 		filled = barWidth
 	}
 
-	bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+	// Use different characters for better visual effect
+	filledBar := strings.Repeat("●", filled)
+	emptyBar := strings.Repeat("○", barWidth-filled)
+	bar := filledBar + emptyBar
 
 	var display string
 	if cfg.ContextValue == "tokens" {
-		display = fmt.Sprintf("%d/%d", s.Context.UsedTokens, s.Context.TotalTokens)
+		display = fmt.Sprintf("%dk/%dk", s.Context.UsedTokens/1000, s.Context.TotalTokens/1000)
 	} else {
 		display = fmt.Sprintf("%.0f%%", percentage)
 	}
 
-	return style.Render(fmt.Sprintf("[%s] %s", bar, display)), nil
+	// Format with icon and styled bar
+	return fmt.Sprintf("%s %s %s",
+		icon,
+		barStyle.Render(bar),
+		style.ContextStyle.Render(display),
+	), nil
 }

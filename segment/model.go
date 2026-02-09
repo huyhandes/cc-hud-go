@@ -3,14 +3,9 @@ package segment
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
-)
-
-var (
-	modelStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("12")) // Blue
-	planStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("10")) // Green
+	"github.com/huybui/cc-hud-go/style"
 )
 
 type ModelSegment struct{}
@@ -28,12 +23,13 @@ func (m *ModelSegment) Render(s *state.State, cfg *config.Config) (string, error
 		return "", nil
 	}
 
-	model := modelStyle.Render(s.Model.Name)
+	// Add AI/robot icon for model
+	icon := "🤖"
+	model := style.ModelStyle.Render(s.Model.Name)
 
 	if s.Model.PlanType != "" {
-		plan := planStyle.Render(fmt.Sprintf("[%s]", s.Model.PlanType))
-		return fmt.Sprintf("%s %s", model, plan), nil
+		return fmt.Sprintf("%s %s", icon, model), nil
 	}
 
-	return model, nil
+	return fmt.Sprintf("%s %s", icon, model), nil
 }

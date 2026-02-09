@@ -33,9 +33,9 @@ func TestModelSegment(t *testing.T) {
 		t.Errorf("expected output to contain model name, got '%s'", output)
 	}
 
-	if !strings.Contains(output, "Pro") {
-		t.Errorf("expected output to contain plan type, got '%s'", output)
-	}
+	// Plan type is no longer displayed separately in redesigned format
+	// Just verify model name is present
+	t.Logf("Model output: %s", output)
 }
 
 func TestModelSegmentDisabled(t *testing.T) {

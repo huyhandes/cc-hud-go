@@ -6,6 +6,7 @@ import (
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/segment"
 	"github.com/huybui/cc-hud-go/state"
+	"github.com/huybui/cc-hud-go/style"
 )
 
 // Render generates plain text output for the statusline
@@ -37,6 +38,7 @@ func Render(s *state.State, cfg *config.Config) (string, error) {
 		parts = append(parts, text)
 	}
 
-	// Join segments with separator
-	return strings.Join(parts, " | "), nil
+	// Join segments with styled separator
+	separator := style.Separator()
+	return strings.Join(parts, " "+separator+" "), nil
 }

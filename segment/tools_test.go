@@ -30,8 +30,9 @@ func TestToolsSegment(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	if !strings.Contains(output, "Tools:") {
-		t.Errorf("expected 'Tools:' prefix in output, got '%s'", output)
+	// Format changed to use icon, check for tool count instead
+	if !strings.Contains(output, "26") {
+		t.Errorf("expected tool count '26' in output, got '%s'", output)
 	}
 
 	// Should show category counts

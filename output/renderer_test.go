@@ -30,9 +30,9 @@ func TestRender(t *testing.T) {
 		t.Errorf("expected output to contain model name, got: %s", output)
 	}
 
-	// Should contain separator
-	if !strings.Contains(output, "|") {
-		t.Errorf("expected output to contain separator '|', got: %s", output)
+	// Should contain separator (now it's │)
+	if !strings.Contains(output, "│") {
+		t.Errorf("expected output to contain separator '│', got: %s", output)
 	}
 }
 

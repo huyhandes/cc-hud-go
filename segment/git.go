@@ -4,14 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
-)
-
-var (
-	branchStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("13")) // Magenta
-	dirtyStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("11")) // Yellow
+	"github.com/huybui/cc-hud-go/style"
 )
 
 type GitSegment struct{}
@@ -31,36 +26,43 @@ func (g *GitSegment) Render(s *state.State, cfg *config.Config) (string, error) 
 
 	var parts []string
 
-	// Branch name
+	// Branch name with icon
 	if cfg.Git.ShowBranch {
-		parts = append(parts, branchStyle.Render(s.Git.Branch))
+		branchIcon := "🌿"
+		parts = append(parts, style.GitStyle.Render(fmt.Sprintf("%s %s", branchIcon, s.Git.Branch)))
 	}
 
-	// Dirty indicator
+	// Dirty indicator with warning icon
 	if cfg.Git.ShowDirty && s.Git.DirtyFiles > 0 {
-		parts = append(parts, dirtyStyle.Render(fmt.Sprintf("✗%d", s.Git.DirtyFiles)))
+		dirtyStyle := style.GetRenderer().NewStyle().Foreground(style.ColorWarning)
+		parts = append(parts, dirtyStyle.Render(fmt.Sprintf("⚠%d", s.Git.DirtyFiles)))
 	}
 
-	// Ahead/behind
+	// Ahead/behind with colored arrows
 	if cfg.Git.ShowAheadBehind {
 		if s.Git.Ahead > 0 {
-			parts = append(parts, fmt.Sprintf("↑%d", s.Git.Ahead))
+			aheadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+			parts = append(parts, aheadStyle.Render(fmt.Sprintf("↑%d", s.Git.Ahead)))
 		}
 		if s.Git.Behind > 0 {
-			parts = append(parts, fmt.Sprintf("↓%d", s.Git.Behind))
+			behindStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
+			parts = append(parts, behindStyle.Render(fmt.Sprintf("↓%d", s.Git.Behind)))
 		}
 	}
 
-	// File stats
+	// File stats with colored indicators
 	if cfg.Git.ShowFileStats {
 		if s.Git.Added > 0 {
-			parts = append(parts, fmt.Sprintf("+%d", s.Git.Added))
+			addedStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+			parts = append(parts, addedStyle.Render(fmt.Sprintf("+%d", s.Git.Added)))
 		}
 		if s.Git.Modified > 0 {
-			parts = append(parts, fmt.Sprintf("~%d", s.Git.Modified))
+			modStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+			parts = append(parts, modStyle.Render(fmt.Sprintf("~%d", s.Git.Modified)))
 		}
 		if s.Git.Deleted > 0 {
-			parts = append(parts, fmt.Sprintf("-%d", s.Git.Deleted))
+			delStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
+			parts = append(parts, delStyle.Render(fmt.Sprintf("-%d", s.Git.Deleted)))
 		}
 	}
 

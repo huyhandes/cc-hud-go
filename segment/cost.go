@@ -3,14 +3,9 @@ package segment
 import (
 	"fmt"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
-)
-
-var (
-	costYellowStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
-	costGreenStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+	"github.com/huybui/cc-hud-go/style"
 )
 
 type CostSegment struct{}
@@ -30,13 +25,13 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 
 	parts := []string{}
 
-	// Show cost if available
+	// Show cost with money icon
 	if st.Cost.TotalUSD > 0 {
-		costStr := fmt.Sprintf("$%.4f", st.Cost.TotalUSD)
-		parts = append(parts, costYellowStyle.Render(costStr))
+		costStr := fmt.Sprintf("💰$%.4f", st.Cost.TotalUSD)
+		parts = append(parts, style.CostStyle.Render(costStr))
 	}
 
-	// Show duration if available
+	// Show duration with clock icon
 	if st.Cost.DurationMs > 0 {
 		durationSec := st.Cost.DurationMs / 1000
 		mins := durationSec / 60
@@ -44,17 +39,19 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 
 		durationStr := ""
 		if mins > 0 {
-			durationStr = fmt.Sprintf("%dm%ds", mins, secs)
+			durationStr = fmt.Sprintf("⏱ %dm%ds", mins, secs)
 		} else {
-			durationStr = fmt.Sprintf("%ds", secs)
+			durationStr = fmt.Sprintf("⏱ %ds", secs)
 		}
-		parts = append(parts, durationStr)
+		durationStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+		parts = append(parts, durationStyle.Render(durationStr))
 	}
 
-	// Show lines changed if available
+	// Show lines changed with code icon
 	if st.Cost.LinesAdded > 0 || st.Cost.LinesRemoved > 0 {
-		linesStr := fmt.Sprintf("+%d/-%d", st.Cost.LinesAdded, st.Cost.LinesRemoved)
-		parts = append(parts, costGreenStyle.Render(linesStr))
+		linesStr := fmt.Sprintf("📝 +%d/-%d", st.Cost.LinesAdded, st.Cost.LinesRemoved)
+		linesStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+		parts = append(parts, linesStyle.Render(linesStr))
 	}
 
 	if len(parts) == 0 {

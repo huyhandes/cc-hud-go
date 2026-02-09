@@ -21,10 +21,7 @@ func TestAgentSegment(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	if !strings.Contains(output, "Agent:") {
-		t.Errorf("expected 'Agent:' prefix in output, got '%s'", output)
-	}
-
+	// Check output contains agent name (format changed to use icon)
 	if !strings.Contains(output, "test-agent") {
 		t.Errorf("expected agent name in output, got '%s'", output)
 	}

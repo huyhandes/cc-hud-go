@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
+	"github.com/huybui/cc-hud-go/style"
 )
-
-var toolsStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("14")) // Cyan
 
 type ToolsSegment struct{}
 
@@ -56,8 +54,9 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 		return "", nil
 	}
 
-	// Build output
+	// Build output with icon
 	var parts []string
+	icon := "🔧"
 
 	if cfg.Tools.GroupByCategory {
 		if appTotal > 0 {
@@ -73,8 +72,8 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 			parts = append(parts, fmt.Sprintf("Custom:%d", customTotal))
 		}
 
-		return toolsStyle.Render(fmt.Sprintf("Tools: %d (%s)", total, strings.Join(parts, " "))), nil
+		return style.ToolsStyle.Render(fmt.Sprintf("%s %d (%s)", icon, total, strings.Join(parts, " "))), nil
 	}
 
-	return toolsStyle.Render(fmt.Sprintf("Tools: %d", total)), nil
+	return style.ToolsStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
 }
