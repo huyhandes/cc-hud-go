@@ -39,3 +39,34 @@ func TestParseStdin(t *testing.T) {
 		t.Errorf("expected TotalTokens 200000, got %d", s.Context.TotalTokens)
 	}
 }
+
+func TestParseStdinInvalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{
+			name:  "invalid JSON",
+			input: `{"model": invalid}`,
+		},
+		{
+			name:  "empty input",
+			input: ``,
+		},
+		{
+			name:  "partial JSON",
+			input: `{"model": "test"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := state.New()
+			err := ParseStdin([]byte(tt.input), s)
+
+			if err == nil {
+				t.Error("expected error for invalid input")
+			}
+		})
+	}
+}
