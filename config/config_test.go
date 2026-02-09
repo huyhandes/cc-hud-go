@@ -53,3 +53,35 @@ func TestMinimalPreset(t *testing.T) {
 		t.Error("expected core displays (Model, Context) to be true")
 	}
 }
+
+func TestLoadFromFile(t *testing.T) {
+	// Test valid config
+	cfg, err := LoadFromFile("../testdata/config_valid.json")
+	if err != nil {
+		t.Fatalf("failed to load valid config: %v", err)
+	}
+
+	if cfg.Preset != "essential" {
+		t.Errorf("expected preset 'essential', got '%s'", cfg.Preset)
+	}
+
+	// Test missing file (should return defaults)
+	cfg, err = LoadFromFile("nonexistent.json")
+	if err != nil {
+		t.Fatalf("should not error on missing file: %v", err)
+	}
+
+	if cfg.Preset != "full" {
+		t.Error("expected default preset on missing file")
+	}
+
+	// Test invalid JSON (should return defaults)
+	cfg, err = LoadFromFile("../testdata/config_invalid.json")
+	if err != nil {
+		t.Fatalf("should not error on invalid JSON: %v", err)
+	}
+
+	if cfg.Preset != "full" {
+		t.Error("expected default preset on invalid JSON")
+	}
+}

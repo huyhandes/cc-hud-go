@@ -1,0 +1,10 @@
+{
+  "preset": "essential",
+  "layout": "compact",
+  "pathLevels": 1,
+  "display": {
+    "model": true,
+    "context": true,
+    "git": true
+  }
+}

@@ -1,5 +1,11 @@
 package config
 
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
 // Config holds all configuration options
 type Config struct {
 	Preset             string
@@ -102,4 +108,31 @@ func Minimal() *Config {
 	cfg.Display.Duration = false
 	cfg.Display.Speed = false
 	return cfg
+}
+
+// LoadFromFile loads config from JSON file, returns defaults on any error
+func LoadFromFile(path string) (*Config, error) {
+	// Start with defaults
+	cfg := Default()
+
+	// Try to read file
+	data, err := os.ReadFile(path)
+	if err != nil {
+		// Missing file is OK, just use defaults
+		if os.IsNotExist(err) {
+			return cfg, nil
+		}
+		// Other read errors: log but continue with defaults
+		fmt.Fprintf(os.Stderr, "warning: failed to read config: %v\n", err)
+		return cfg, nil
+	}
+
+	// Try to parse JSON
+	if err := json.Unmarshal(data, cfg); err != nil {
+		// Invalid JSON: log but continue with defaults
+		fmt.Fprintf(os.Stderr, "warning: failed to parse config: %v\n", err)
+		return Default(), nil
+	}
+
+	return cfg, nil
 }
