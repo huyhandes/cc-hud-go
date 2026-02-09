@@ -57,40 +57,44 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		return fmt.Sprintf("%d", tokens)
 	}
 
-	// Main display with bar and percentage
+	// Main display with bar and percentage (matches bar color for consistency)
+	percentageStyle := barStyle // Match percentage color to bar status
 	mainDisplay := fmt.Sprintf("%s %s %s",
 		icon,
 		barStyle.Render(bar),
-		style.ContextStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
+		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
 	)
 
-	// Detailed token breakdown
+	// Detailed token breakdown with semantic colors
 	details := []string{}
 
-	// Input/Output tokens
-	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
-	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+	// Input tokens - Blue (incoming data)
+	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
 	details = append(details,
 		fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))),
 	)
+
+	// Output tokens - Emerald/Green (outgoing data)
+	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
 	details = append(details,
 		fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))),
 	)
 
-	// Cache stats if available
+	// Cache stats if available - Different colors for Read vs Write
 	if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
-		cacheStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCyan)
+		cacheReadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheRead)
+		cacheWriteStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheWrite)
+
 		details = append(details,
-			fmt.Sprintf("💾 %s", cacheStyle.Render(
-				fmt.Sprintf("R:%s W:%s",
-					formatTokens(s.Context.CacheReadTokens),
-					formatTokens(s.Context.CacheCreateTokens),
-				),
-			)),
+			fmt.Sprintf("💾 %s%s%s",
+				cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
+				style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+				cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens)),
+			),
 		)
 	}
 
-	// Total context size
+	// Total context size - Muted gray (static constant)
 	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
 	details = append(details,
 		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),

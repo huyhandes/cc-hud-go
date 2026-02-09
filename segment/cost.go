@@ -25,13 +25,14 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 
 	parts := []string{}
 
-	// Show cost with money icon
+	// Show cost with money icon - Orange/Accent (emphasis on cost)
 	if st.Cost.TotalUSD > 0 {
 		costStr := fmt.Sprintf("💰$%.4f", st.Cost.TotalUSD)
-		parts = append(parts, style.CostStyle.Render(costStr))
+		costStyle := style.GetRenderer().NewStyle().Foreground(style.ColorAccent).Bold(true)
+		parts = append(parts, costStyle.Render(costStr))
 	}
 
-	// Show duration with clock icon
+	// Show duration with clock icon - Cyan (time tracking)
 	if st.Cost.DurationMs > 0 {
 		durationSec := st.Cost.DurationMs / 1000
 		mins := durationSec / 60
@@ -43,15 +44,20 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 		} else {
 			durationStr = fmt.Sprintf("⏱ %ds", secs)
 		}
-		durationStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+		durationStyle := style.GetRenderer().NewStyle().Foreground(style.ColorHighlight)
 		parts = append(parts, durationStyle.Render(durationStr))
 	}
 
-	// Show lines changed with code icon
+	// Show lines changed with code icon - Split colors for +/-
 	if st.Cost.LinesAdded > 0 || st.Cost.LinesRemoved > 0 {
-		linesStr := fmt.Sprintf("📝 +%d/-%d", st.Cost.LinesAdded, st.Cost.LinesRemoved)
-		linesStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
-		parts = append(parts, linesStyle.Render(linesStr))
+		addStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+		removeStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
+		linesStr := fmt.Sprintf("📝 %s%s%s",
+			addStyle.Render(fmt.Sprintf("+%d", st.Cost.LinesAdded)),
+			style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+			removeStyle.Render(fmt.Sprintf("-%d", st.Cost.LinesRemoved)),
+		)
+		parts = append(parts, linesStr)
 	}
 
 	if len(parts) == 0 {

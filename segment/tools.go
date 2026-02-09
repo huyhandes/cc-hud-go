@@ -54,9 +54,10 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 		return "", nil
 	}
 
-	// Build output with icon
+	// Build output with icon - Teal/Info color (distinct from other segments)
 	var parts []string
 	icon := "🔧"
+	toolsMainStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
 
 	if cfg.Tools.GroupByCategory {
 		if appTotal > 0 {
@@ -72,8 +73,8 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 			parts = append(parts, fmt.Sprintf("Custom:%d", customTotal))
 		}
 
-		return style.ToolsStyle.Render(fmt.Sprintf("%s %d (%s)", icon, total, strings.Join(parts, " "))), nil
+		return toolsMainStyle.Render(fmt.Sprintf("%s %d (%s)", icon, total, strings.Join(parts, " "))), nil
 	}
 
-	return style.ToolsStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
+	return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
 }

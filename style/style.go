@@ -12,15 +12,30 @@ var (
 	// Global renderer that forces color output
 	renderer *lipgloss.Renderer
 
-	// Color palette
-	ColorPrimary   = lipgloss.Color("#7C3AED") // Purple
-	ColorSuccess   = lipgloss.Color("#10B981") // Green
-	ColorWarning   = lipgloss.Color("#F59E0B") // Orange
-	ColorDanger    = lipgloss.Color("#EF4444") // Red
-	ColorInfo      = lipgloss.Color("#3B82F6") // Blue
-	ColorCyan      = lipgloss.Color("#06B6D4") // Cyan
-	ColorMuted     = lipgloss.Color("#6B7280") // Gray
+	// Color palette - organized by semantic meaning
+
+	// Status colors (usage levels)
+	ColorSuccess   = lipgloss.Color("#10B981") // Green - healthy/good
+	ColorWarning   = lipgloss.Color("#F59E0B") // Orange - caution
+	ColorDanger    = lipgloss.Color("#EF4444") // Red - critical
+
+	// Flow colors (data movement)
+	ColorInput     = lipgloss.Color("#3B82F6") // Blue - incoming data
+	ColorOutput    = lipgloss.Color("#10B981") // Emerald - outgoing data
+
+	// Cache colors (storage layer)
+	ColorCacheRead  = lipgloss.Color("#8B5CF6") // Purple - cache read
+	ColorCacheWrite = lipgloss.Color("#EC4899") // Pink - cache write
+
+	// Primary UI colors
+	ColorPrimary   = lipgloss.Color("#7C3AED") // Purple - model/agent
+	ColorHighlight = lipgloss.Color("#06B6D4") // Cyan - git/highlights
+	ColorAccent    = lipgloss.Color("#F59E0B") // Orange - cost/emphasis
+
+	// Utility colors
+	ColorMuted     = lipgloss.Color("#6B7280") // Gray - separators/static
 	ColorBright    = lipgloss.Color("#F3F4F6") // Light gray
+	ColorInfo      = lipgloss.Color("#14B8A6") // Teal - information
 
 	// Pre-configured styles
 	ModelStyle    lipgloss.Style
@@ -51,7 +66,7 @@ func init() {
 		Foreground(ColorInfo)
 
 	GitStyle = renderer.NewStyle().
-		Foreground(ColorCyan)
+		Foreground(ColorHighlight)
 
 	CostStyle = renderer.NewStyle().
 		Foreground(ColorWarning)
