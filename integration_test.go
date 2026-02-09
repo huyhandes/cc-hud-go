@@ -28,7 +28,6 @@ func TestIntegration(t *testing.T) {
 	testScript := `/bin/sh -c '
 export HOME=` + testHome + `
 echo "{\"session_id\":\"test123\",\"cwd\":\"/test\",\"model\":{\"id\":\"claude-sonnet-4-5\",\"display_name\":\"Sonnet 4.5\"},\"workspace\":{\"current_dir\":\"/test\",\"project_dir\":\"/test\"},\"context_window\":{\"total_input_tokens\":50000,\"total_output_tokens\":10000,\"context_window_size\":200000,\"used_percentage\":30.0,\"remaining_percentage\":70.0,\"current_usage\":{\"input_tokens\":40000,\"output_tokens\":10000,\"cache_creation_input_tokens\":5000,\"cache_read_input_tokens\":5000}}}"
-sleep 1
 ' | ./cc-hud-go-test 2>&1`
 
 	// Run the test script
