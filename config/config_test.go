@@ -85,3 +85,56 @@ func TestLoadFromFile(t *testing.T) {
 		t.Error("expected default preset on invalid JSON")
 	}
 }
+
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name     string
+		cfg      *Config
+		wantErr  bool
+	}{
+		{
+			name:    "valid config",
+			cfg:     Default(),
+			wantErr: false,
+		},
+		{
+			name: "pathLevels too low",
+			cfg: &Config{
+				PathLevels: 0,
+			},
+			wantErr: true,
+		},
+		{
+			name: "pathLevels too high",
+			cfg: &Config{
+				PathLevels: 5,
+			},
+			wantErr: true,
+		},
+		{
+			name: "threshold negative",
+			cfg: &Config{
+				PathLevels:        2,
+				SevenDayThreshold: -10,
+			},
+			wantErr: true,
+		},
+		{
+			name: "threshold too high",
+			cfg: &Config{
+				PathLevels:        2,
+				SevenDayThreshold: 150,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.cfg.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

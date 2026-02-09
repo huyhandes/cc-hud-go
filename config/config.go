@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -110,6 +111,19 @@ func Minimal() *Config {
 	return cfg
 }
 
+// Validate checks config values are within valid ranges
+func (c *Config) Validate() error {
+	if c.PathLevels < 1 || c.PathLevels > 3 {
+		return errors.New("pathLevels must be between 1 and 3")
+	}
+
+	if c.SevenDayThreshold < 0 || c.SevenDayThreshold > 100 {
+		return errors.New("sevenDayThreshold must be between 0 and 100")
+	}
+
+	return nil
+}
+
 // LoadFromFile loads config from JSON file, returns defaults on any error
 func LoadFromFile(path string) (*Config, error) {
 	// Start with defaults
@@ -131,6 +145,12 @@ func LoadFromFile(path string) (*Config, error) {
 	if err := json.Unmarshal(data, cfg); err != nil {
 		// Invalid JSON: log but continue with defaults
 		fmt.Fprintf(os.Stderr, "warning: failed to parse config: %v\n", err)
+		return Default(), nil
+	}
+
+	// Validate and fix invalid values
+	if err := cfg.Validate(); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: invalid config values, using defaults: %v\n", err)
 		return Default(), nil
 	}
 
