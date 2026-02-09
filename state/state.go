@@ -94,3 +94,14 @@ func New() *State {
 		},
 	}
 }
+
+// UpdateDerived updates calculated fields like duration and percentage
+func (s *State) UpdateDerived() {
+	// Update session duration
+	s.Session.Duration = time.Since(s.Session.StartTime)
+
+	// Update context percentage
+	if s.Context.TotalTokens > 0 {
+		s.Context.Percentage = float64(s.Context.UsedTokens) / float64(s.Context.TotalTokens) * 100.0
+	}
+}
