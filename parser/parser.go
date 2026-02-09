@@ -64,6 +64,9 @@ type StdinData struct {
 		TotalLinesRemoved   int     `json:"total_lines_removed"`
 	} `json:"cost,omitempty"`
 	Exceeds200KTokens bool `json:"exceeds_200k_tokens"`
+	OutputStyle *struct {
+		Name string `json:"name"`
+	} `json:"output_style,omitempty"`
 	Vim *struct {
 		Mode string `json:"mode"`
 	} `json:"vim,omitempty"`
@@ -99,6 +102,11 @@ func ParseStdin(data []byte, s *state.State) error {
 		// Fallback to total tokens
 		s.Context.UsedTokens = stdin.ContextWindow.TotalInputTokens
 		s.Context.TotalTokens = stdin.ContextWindow.ContextWindowSize
+	}
+
+	// Update agent info if present
+	if stdin.Agent != nil {
+		s.Agents.ActiveAgent = stdin.Agent.Name
 	}
 
 	// Update rate limits - not provided in API, keep existing values
