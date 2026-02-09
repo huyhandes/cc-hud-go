@@ -28,5 +28,6 @@ func All() []Segment {
 		&GitSegment{},
 		&ToolsSegment{},
 		&TasksSegment{},
+		&AgentSegment{},
 	}
 }
