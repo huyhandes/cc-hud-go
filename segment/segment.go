@@ -26,6 +26,7 @@ func All() []Segment {
 		&ModelSegment{},
 		&ContextSegment{},
 		&GitSegment{},
+		&CostSegment{},
 		&ToolsSegment{},
 		&TasksSegment{},
 		&AgentSegment{},

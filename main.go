@@ -38,6 +38,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Parse transcript file for tool usage if available
+	if s.Session.TranscriptPath != "" {
+		if err := parser.ParseTranscript(s.Session.TranscriptPath, s); err != nil {
+			// Don't fail on transcript errors, just log
+			fmt.Fprintf(os.Stderr, "Warning: failed to parse transcript: %v\n", err)
+		}
+	}
+
 	// Update git information
 	if branch, err := git.GetBranch(); err == nil {
 		s.Git.Branch = branch

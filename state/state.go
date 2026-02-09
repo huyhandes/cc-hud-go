@@ -12,6 +12,7 @@ type State struct {
 	Agents     AgentInfo
 	Tasks      TaskInfo
 	Session    SessionInfo
+	Cost       CostInfo
 }
 
 type ModelInfo struct {
@@ -74,9 +75,19 @@ type TaskInfo struct {
 }
 
 type SessionInfo struct {
-	StartTime  time.Time
-	Duration   time.Duration
-	TokenSpeed float64
+	ID             string
+	TranscriptPath string
+	StartTime      time.Time
+	Duration       time.Duration
+	TokenSpeed     float64
+}
+
+type CostInfo struct {
+	TotalUSD       float64
+	DurationMs     int64
+	APIDurationMs  int64
+	LinesAdded     int
+	LinesRemoved   int
 }
 
 // New creates a new State with initialized maps

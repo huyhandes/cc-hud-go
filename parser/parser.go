@@ -1,7 +1,9 @@
 package parser
 
 import (
+	"bufio"
 	"encoding/json"
+	"os"
 	"strings"
 
 	"github.com/huybui/cc-hud-go/state"
@@ -82,6 +84,10 @@ func ParseStdin(data []byte, s *state.State) error {
 		return err
 	}
 
+	// Update session info
+	s.Session.ID = stdin.SessionID
+	s.Session.TranscriptPath = stdin.TranscriptPath
+
 	// Update model info
 	s.Model.Name = stdin.Model.DisplayName
 	if s.Model.Name == "" {
@@ -107,6 +113,15 @@ func ParseStdin(data []byte, s *state.State) error {
 	// Update agent info if present
 	if stdin.Agent != nil {
 		s.Agents.ActiveAgent = stdin.Agent.Name
+	}
+
+	// Update cost info if present
+	if stdin.Cost != nil {
+		s.Cost.TotalUSD = stdin.Cost.TotalCostUSD
+		s.Cost.DurationMs = stdin.Cost.TotalDurationMs
+		s.Cost.APIDurationMs = stdin.Cost.TotalAPIDurationMs
+		s.Cost.LinesAdded = stdin.Cost.TotalLinesAdded
+		s.Cost.LinesRemoved = stdin.Cost.TotalLinesRemoved
 	}
 
 	// Update rate limits - not provided in API, keep existing values
@@ -196,4 +211,25 @@ func ParseTranscriptLine(data []byte, s *state.State) error {
 	}
 
 	return nil
+}
+
+// ParseTranscript reads and parses the entire transcript file
+func ParseTranscript(path string, s *state.State) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+		// Ignore errors from individual lines, just continue
+		ParseTranscriptLine(line, s)
+	}
+
+	return scanner.Err()
 }
