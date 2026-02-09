@@ -46,12 +46,12 @@ type StdinData struct {
 		ProjectDir string `json:"project_dir"`
 	} `json:"workspace"`
 	ContextWindow struct {
-		TotalInputTokens   int     `json:"total_input_tokens"`
-		TotalOutputTokens  int     `json:"total_output_tokens"`
-		ContextWindowSize  int     `json:"context_window_size"`
-		UsedPercentage     float64 `json:"used_percentage"`
+		TotalInputTokens    int     `json:"total_input_tokens"`
+		TotalOutputTokens   int     `json:"total_output_tokens"`
+		ContextWindowSize   int     `json:"context_window_size"`
+		UsedPercentage      float64 `json:"used_percentage"`
 		RemainingPercentage float64 `json:"remaining_percentage"`
-		CurrentUsage       *struct {
+		CurrentUsage        *struct {
 			InputTokens              int `json:"input_tokens"`
 			OutputTokens             int `json:"output_tokens"`
 			CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
@@ -59,14 +59,14 @@ type StdinData struct {
 		} `json:"current_usage"`
 	} `json:"context_window"`
 	Cost *struct {
-		TotalCostUSD        float64 `json:"total_cost_usd"`
-		TotalDurationMs     int64   `json:"total_duration_ms"`
-		TotalAPIDurationMs  int64   `json:"total_api_duration_ms"`
-		TotalLinesAdded     int     `json:"total_lines_added"`
-		TotalLinesRemoved   int     `json:"total_lines_removed"`
+		TotalCostUSD       float64 `json:"total_cost_usd"`
+		TotalDurationMs    int64   `json:"total_duration_ms"`
+		TotalAPIDurationMs int64   `json:"total_api_duration_ms"`
+		TotalLinesAdded    int     `json:"total_lines_added"`
+		TotalLinesRemoved  int     `json:"total_lines_removed"`
 	} `json:"cost,omitempty"`
 	Exceeds200KTokens bool `json:"exceeds_200k_tokens"`
-	OutputStyle *struct {
+	OutputStyle       *struct {
 		Name string `json:"name"`
 	} `json:"output_style,omitempty"`
 	Vim *struct {
@@ -223,7 +223,9 @@ func ParseTranscript(path string, s *state.State) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -232,7 +234,7 @@ func ParseTranscript(path string, s *state.State) error {
 			continue
 		}
 		// Ignore errors from individual lines, just continue
-		ParseTranscriptLine(line, s)
+		_ = ParseTranscriptLine(line, s)
 	}
 
 	return scanner.Err()

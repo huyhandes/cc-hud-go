@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -13,7 +14,20 @@ import (
 	"github.com/huybui/cc-hud-go/state"
 )
 
+// version is set at build time via -ldflags
+var version = "dev"
+
 func main() {
+	// Parse flags
+	versionFlag := flag.Bool("version", false, "Print version and exit")
+	flag.BoolVar(versionFlag, "v", false, "Print version and exit (shorthand)")
+	flag.Parse()
+
+	// Handle version flag
+	if *versionFlag {
+		fmt.Printf("cc-hud-go %s\n", version)
+		os.Exit(0)
+	}
 	// Load config
 	home, _ := os.UserHomeDir()
 	configPath := filepath.Join(home, ".claude", "cc-hud-go", "config.json")

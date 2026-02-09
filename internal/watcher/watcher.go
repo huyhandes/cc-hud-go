@@ -26,10 +26,12 @@ func Watch(path string, lines chan<- string, stop <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	// Seek to end
-	file.Seek(0, 2)
+	_, _ = file.Seek(0, 2)
 
 	scanner := bufio.NewScanner(file)
 	ticker := time.NewTicker(100 * time.Millisecond)

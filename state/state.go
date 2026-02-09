@@ -88,11 +88,11 @@ type SessionInfo struct {
 }
 
 type CostInfo struct {
-	TotalUSD       float64
-	DurationMs     int64
-	APIDurationMs  int64
-	LinesAdded     int
-	LinesRemoved   int
+	TotalUSD      float64
+	DurationMs    int64
+	APIDurationMs int64
+	LinesAdded    int
+	LinesRemoved  int
 }
 
 // New creates a new State with initialized maps

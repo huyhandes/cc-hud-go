@@ -2,8 +2,14 @@
 
 A Go-based statusline tool for [Claude Code](https://code.claude.com) that displays rich, real-time information about your current Claude Code session.
 
+[![CI](https://github.com/huyhandes/cc-hud-go/actions/workflows/ci.yml/badge.svg)](https://github.com/huyhandes/cc-hud-go/actions/workflows/ci.yml)
+[![Release](https://github.com/huyhandes/cc-hud-go/actions/workflows/release.yml/badge.svg)](https://github.com/huyhandes/cc-hud-go/actions/workflows/release.yml)
 [![Go Version](https://img.shields.io/badge/go-%3E%3D1.24-blue.svg)](https://golang.org)
+[![Go Report Card](https://goreportcard.com/badge/github.com/huyhandes/cc-hud-go)](https://goreportcard.com/report/github.com/huyhandes/cc-hud-go)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/huyhandes/cc-hud-go)](https://github.com/huyhandes/cc-hud-go/releases/latest)
+
+![Preview](assets/preview.jpeg)
 
 ## Features
 
@@ -26,6 +32,32 @@ A Go-based statusline tool for [Claude Code](https://code.claude.com) that displ
 - **JSON Configuration** - Easy configuration via `~/.claude/cc-hud-go/config.json`
 
 ## Installation
+
+### Pre-built Binaries
+
+Download pre-built binaries from the [latest release](https://github.com/huyhandes/cc-hud-go/releases/latest):
+
+```bash
+# Linux (amd64)
+wget https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-linux-amd64.tar.gz
+tar -xzf cc-hud-go-linux-amd64.tar.gz
+sudo mv cc-hud-go-linux-amd64 /usr/local/bin/cc-hud-go
+
+# macOS (Apple Silicon)
+wget https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-darwin-arm64.tar.gz
+tar -xzf cc-hud-go-darwin-arm64.tar.gz
+sudo mv cc-hud-go-darwin-arm64 /usr/local/bin/cc-hud-go
+
+# macOS (Intel)
+wget https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-darwin-amd64.tar.gz
+tar -xzf cc-hud-go-darwin-amd64.tar.gz
+sudo mv cc-hud-go-darwin-amd64 /usr/local/bin/cc-hud-go
+```
+
+Available builds:
+- Linux: `amd64`, `arm64`
+- macOS: `amd64`, `arm64`
+- Windows: `amd64`, `arm64`
 
 ### From Source
 
@@ -263,6 +295,26 @@ go test ./...
 # Build
 go build -o cc-hud-go .
 ```
+
+### Creating a Release
+
+The project uses GitHub Actions for automated releases:
+
+```bash
+# Create and push a version tag
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+This will trigger the release workflow which:
+1. Builds binaries for all supported platforms (Linux, macOS, Windows)
+2. Supports both `amd64` and `arm64` architectures
+3. Creates compressed archives (`.tar.gz` for Unix, `.zip` for Windows)
+4. Generates SHA256 checksums
+5. Creates a GitHub release with auto-generated release notes
+6. Uploads all artifacts to the release
+
+You can also trigger a release manually from the Actions tab on GitHub.
 
 ### Running Tests
 

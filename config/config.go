@@ -9,14 +9,14 @@ import (
 
 // Config holds all configuration options
 type Config struct {
-	Preset             string
-	LineLayout         string
-	PathLevels         int
-	ContextValue       string
-	SevenDayThreshold  int
-	Display            DisplayConfig
-	Git                GitConfig
-	Tools              ToolsConfig
+	Preset            string
+	LineLayout        string
+	PathLevels        int
+	ContextValue      string
+	SevenDayThreshold int
+	Display           DisplayConfig
+	Git               GitConfig
+	Tools             ToolsConfig
 }
 
 type DisplayConfig struct {

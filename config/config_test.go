@@ -88,9 +88,9 @@ func TestLoadFromFile(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		name     string
-		cfg      *Config
-		wantErr  bool
+		name    string
+		cfg     *Config
+		wantErr bool
 	}{
 		{
 			name:    "valid config",

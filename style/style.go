@@ -15,13 +15,13 @@ var (
 	// Color palette - organized by semantic meaning
 
 	// Status colors (usage levels)
-	ColorSuccess   = lipgloss.Color("#10B981") // Green - healthy/good
-	ColorWarning   = lipgloss.Color("#F59E0B") // Orange - caution
-	ColorDanger    = lipgloss.Color("#EF4444") // Red - critical
+	ColorSuccess = lipgloss.Color("#10B981") // Green - healthy/good
+	ColorWarning = lipgloss.Color("#F59E0B") // Orange - caution
+	ColorDanger  = lipgloss.Color("#EF4444") // Red - critical
 
 	// Flow colors (data movement)
-	ColorInput     = lipgloss.Color("#3B82F6") // Blue - incoming data
-	ColorOutput    = lipgloss.Color("#10B981") // Emerald - outgoing data
+	ColorInput  = lipgloss.Color("#3B82F6") // Blue - incoming data
+	ColorOutput = lipgloss.Color("#10B981") // Emerald - outgoing data
 
 	// Cache colors (storage layer)
 	ColorCacheRead  = lipgloss.Color("#8B5CF6") // Purple - cache read
@@ -33,17 +33,17 @@ var (
 	ColorAccent    = lipgloss.Color("#F59E0B") // Orange - cost/emphasis
 
 	// Utility colors
-	ColorMuted     = lipgloss.Color("#6B7280") // Gray - separators/static
-	ColorBright    = lipgloss.Color("#F3F4F6") // Light gray
-	ColorInfo      = lipgloss.Color("#14B8A6") // Teal - information
+	ColorMuted  = lipgloss.Color("#6B7280") // Gray - separators/static
+	ColorBright = lipgloss.Color("#F3F4F6") // Light gray
+	ColorInfo   = lipgloss.Color("#14B8A6") // Teal - information
 
 	// Pre-configured styles
-	ModelStyle    lipgloss.Style
-	ContextStyle  lipgloss.Style
-	GitStyle      lipgloss.Style
-	CostStyle     lipgloss.Style
-	ToolsStyle    lipgloss.Style
-	AgentStyle    lipgloss.Style
+	ModelStyle     lipgloss.Style
+	ContextStyle   lipgloss.Style
+	GitStyle       lipgloss.Style
+	CostStyle      lipgloss.Style
+	ToolsStyle     lipgloss.Style
+	AgentStyle     lipgloss.Style
 	SeparatorStyle lipgloss.Style
 
 	// Progress bar styles
