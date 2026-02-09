@@ -4,7 +4,6 @@
 package main
 
 import (
-	"encoding/json"
 	"os/exec"
 	"strings"
 	"testing"
@@ -25,10 +24,10 @@ func TestIntegration(t *testing.T) {
 	exec.Command("touch", transcriptDir+"/transcript.jsonl").Run()
 	defer exec.Command("rm", "-rf", testHome).Run()
 
-	// Create a test script that pipes input
+	// Create a test script that pipes input with correct Claude Code format
 	testScript := `/bin/sh -c '
 export HOME=` + testHome + `
-echo "{\"model\":\"claude-sonnet-4.5\",\"planType\":\"Pro\",\"context\":{\"used\":50000,\"total\":200000}}"
+echo "{\"session_id\":\"test123\",\"cwd\":\"/test\",\"model\":{\"id\":\"claude-sonnet-4-5\",\"display_name\":\"Sonnet 4.5\"},\"workspace\":{\"current_dir\":\"/test\",\"project_dir\":\"/test\"},\"context_window\":{\"total_input_tokens\":50000,\"total_output_tokens\":10000,\"context_window_size\":200000,\"used_percentage\":30.0,\"remaining_percentage\":70.0,\"current_usage\":{\"input_tokens\":40000,\"output_tokens\":10000,\"cache_creation_input_tokens\":5000,\"cache_read_input_tokens\":5000}}}"
 sleep 1
 ' | ./cc-hud-go-test 2>&1`
 
@@ -41,35 +40,26 @@ sleep 1
 		}
 	}
 
-	outputStr := string(output)
+	outputStr := strings.TrimSpace(string(output))
 	if outputStr == "" {
 		t.Fatal("no output received")
 	}
 
-	// Find the first line that looks like JSON
-	lines := strings.Split(outputStr, "\n")
-	var jsonLine string
-	for _, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "{") {
-			jsonLine = line
-			break
-		}
+	// Output should be plain text, not JSON
+	// Should contain model name
+	if !strings.Contains(outputStr, "Sonnet") {
+		t.Errorf("expected output to contain 'Sonnet', got: %s", outputStr)
 	}
 
-	if jsonLine == "" {
-		t.Fatalf("no JSON found in output: %s", outputStr)
+	// Should contain context bar indicator
+	if !strings.Contains(outputStr, "[") || !strings.Contains(outputStr, "]") {
+		t.Errorf("expected output to contain progress bar, got: %s", outputStr)
 	}
 
-	// Parse and validate JSON
-	var result map[string]interface{}
-	if err := json.Unmarshal([]byte(jsonLine), &result); err != nil {
-		t.Fatalf("failed to parse JSON: %v\nLine: %s", err, jsonLine)
+	// Should contain separator
+	if !strings.Contains(outputStr, "|") {
+		t.Errorf("expected output to contain separator '|', got: %s", outputStr)
 	}
 
-	segments, ok := result["segments"].([]interface{})
-	if !ok || len(segments) == 0 {
-		t.Error("expected segments in output")
-	}
-
-	t.Logf("Success! Output: %s", jsonLine)
+	t.Logf("Success! Output: %s", outputStr)
 }
