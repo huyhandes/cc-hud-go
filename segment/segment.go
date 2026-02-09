@@ -24,5 +24,6 @@ func (d dummySegment) Render(s *state.State, cfg *config.Config) (string, error)
 func All() []Segment {
 	return []Segment{
 		&ModelSegment{},
+		&ContextSegment{},
 	}
 }
