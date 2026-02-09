@@ -2,6 +2,8 @@ package parser
 
 import (
 	"testing"
+
+	"github.com/huybui/cc-hud-go/state"
 )
 
 func TestCategorizeTool(t *testing.T) {
@@ -25,5 +27,45 @@ func TestCategorizeTool(t *testing.T) {
 				t.Errorf("CategorizeTool(%s) = %v, want %v", tt.toolName, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestParseTranscriptLine(t *testing.T) {
+	line := `{"type":"tool_use","name":"Read","id":"tool_123"}`
+
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+
+	if err != nil {
+		t.Fatalf("ParseTranscriptLine failed: %v", err)
+	}
+
+	if s.Tools.AppTools["Read"] != 1 {
+		t.Errorf("expected Read count 1, got %d", s.Tools.AppTools["Read"])
+	}
+}
+
+func TestParseTranscriptLineMCP(t *testing.T) {
+	line := `{"type":"tool_use","name":"mcp__claude_ai_Atlassian__getConfluencePage"}`
+
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+
+	if err != nil {
+		t.Fatalf("ParseTranscriptLine failed: %v", err)
+	}
+
+	// Check MCP tools map
+	found := false
+	for server, tools := range s.Tools.MCPTools {
+		if server.Name == "claude_ai_Atlassian" {
+			if tools["getConfluencePage"] == 1 {
+				found = true
+			}
+		}
+	}
+
+	if !found {
+		t.Error("expected MCP tool to be tracked")
 	}
 }

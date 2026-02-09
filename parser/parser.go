@@ -98,3 +98,58 @@ func CategorizeTool(name string) ToolCategory {
 	// Everything else is custom
 	return CategoryCustom
 }
+
+type TranscriptLine struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
+
+// ParseTranscriptLine parses a single JSONL line and updates state
+func ParseTranscriptLine(data []byte, s *state.State) error {
+	var line TranscriptLine
+	if err := json.Unmarshal(data, &line); err != nil {
+		return err
+	}
+
+	// Only process tool_use events
+	if line.Type != "tool_use" {
+		return nil
+	}
+
+	category := CategorizeTool(line.Name)
+
+	switch category {
+	case CategoryApp:
+		s.Tools.AppTools[line.Name]++
+
+	case CategoryInternal:
+		s.Tools.InternalTools[line.Name]++
+
+	case CategoryCustom:
+		s.Tools.CustomTools[line.Name]++
+
+	case CategoryMCP:
+		// Parse MCP tool name: mcp__<server>__<tool>
+		parts := strings.Split(line.Name, "__")
+		if len(parts) >= 3 {
+			server := state.MCPServer{
+				Name: parts[1],
+				Type: "mcp",
+			}
+
+			if s.Tools.MCPTools[server] == nil {
+				s.Tools.MCPTools[server] = make(map[string]int)
+			}
+
+			toolName := strings.Join(parts[2:], "__")
+			s.Tools.MCPTools[server][toolName]++
+		}
+
+	case CategorySkill:
+		// Skills need additional parsing from the tool parameters
+		// For now, just count as app tool
+		s.Tools.AppTools["Skill"]++
+	}
+
+	return nil
+}
