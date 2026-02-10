@@ -162,12 +162,12 @@ func TestConfigColorOverrides(t *testing.T) {
 func TestTableConfigDefaults(t *testing.T) {
 	cfg := Default()
 
-	if cfg.Tables.ToolsThreshold != 5 {
-		t.Errorf("Expected ToolsThreshold 5, got %d", cfg.Tables.ToolsThreshold)
+	if cfg.Tables.ToolsThreshold != 999 {
+		t.Errorf("Expected ToolsThreshold 999, got %d", cfg.Tables.ToolsThreshold)
 	}
 
-	if cfg.Tables.TasksThreshold != 3 {
-		t.Errorf("Expected TasksThreshold 3, got %d", cfg.Tables.TasksThreshold)
+	if cfg.Tables.TasksThreshold != 999 {
+		t.Errorf("Expected TasksThreshold 999, got %d", cfg.Tables.TasksThreshold)
 	}
 
 	if cfg.Tables.ContextThreshold != 999 {

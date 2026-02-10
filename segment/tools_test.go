@@ -30,8 +30,8 @@ func TestToolsSegment(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	// With 26 total tools (23+2+1) and default threshold of 5, should show table
-	// Should show category counts in table format
+	// With 26 total tools (23+2+1) and default threshold of 999, should show inline
+	// Should show category counts in lipgloss box format
 	if !strings.Contains(output, "App") {
 		t.Errorf("expected 'App' category in output, got '%s'", output)
 	}
@@ -45,9 +45,9 @@ func TestToolsSegment(t *testing.T) {
 		t.Errorf("expected 'Skills' category in output, got '%s'", output)
 	}
 
-	// Should contain table borders since above threshold
-	if !strings.Contains(output, "┌") {
-		t.Errorf("expected table format for 26 tools (threshold=5), got '%s'", output)
+	// Should contain lipgloss borders (inline format)
+	if !strings.Contains(output, "╭") {
+		t.Errorf("expected lipgloss inline format for 26 tools (threshold=999), got '%s'", output)
 	}
 }
 
