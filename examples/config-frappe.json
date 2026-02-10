@@ -1,0 +1,37 @@
+{
+  "theme": "frappe",
+  "preset": "full",
+  "lineLayout": "expanded",
+  "pathLevels": 2,
+  "contextValue": "percentage",
+  "sevenDayThreshold": 80,
+  "display": {
+    "model": true,
+    "path": true,
+    "context": true,
+    "git": true,
+    "tools": true,
+    "agents": true,
+    "tasks": true,
+    "rateLimits": true,
+    "duration": true,
+    "speed": true
+  },
+  "git": {
+    "showBranch": true,
+    "showDirty": true,
+    "showAheadBehind": true,
+    "showFileStats": true
+  },
+  "tools": {
+    "groupByCategory": true,
+    "showTopN": 5,
+    "showSkills": true,
+    "showMCP": true
+  },
+  "tables": {
+    "toolsTableThreshold": 5,
+    "tasksTableThreshold": 3,
+    "contextTableThreshold": 999
+  }
+}
