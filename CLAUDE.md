@@ -127,7 +127,8 @@ cc-hud-go/
 ├── parser/          # Dual input parsing (stdin JSON & transcript JSONL)
 │   ├── parser.go
 │   ├── stdin_test.go
-│   └── transcript_test.go
+│   ├── transcript_test.go
+│   └── tasks_test.go
 ├── segment/         # Modular display segments
 │   ├── segment.go   # Segment interface & registry
 │   ├── model.go     # Model and plan type display
@@ -144,6 +145,9 @@ cc-hud-go/
 │   └── renderer_test.go
 ├── style/           # Lipgloss styling with semantic color system
 │   └── style.go
+├── version/         # Version detection and build info
+│   ├── version.go
+│   └── version_test.go
 ├── internal/
 │   ├── git/         # Git integration via command execution
 │   │   ├── git.go
@@ -152,8 +156,13 @@ cc-hud-go/
 │       └── watcher.go
 ├── testdata/        # Test fixtures and sample data
 ├── docs/            # Documentation and planning
+│   ├── plans/       # Design and implementation plans
+│   └── COLOR_SCHEME.md
 ├── assets/          # Screenshots and preview images
 ├── main.go          # Application entry point
+├── main_test.go     # Main package tests
+├── integration_test.go  # Integration tests
+├── Makefile         # Build and development commands
 └── go.mod
 ```
 

@@ -35,9 +35,18 @@ func TestToolsSegment(t *testing.T) {
 		t.Errorf("expected tool count '26' in output, got '%s'", output)
 	}
 
-	// Should show category counts
-	if !strings.Contains(output, "App:") {
-		t.Errorf("expected 'App:' category in output, got '%s'", output)
+	// Should show category counts - now uses "📦 App" format in box
+	if !strings.Contains(output, "App") {
+		t.Errorf("expected 'App' category in output, got '%s'", output)
+	}
+
+	// Should show MCP and Skills categories
+	if !strings.Contains(output, "MCP") {
+		t.Errorf("expected 'MCP' category in output, got '%s'", output)
+	}
+
+	if !strings.Contains(output, "Skills") {
+		t.Errorf("expected 'Skills' category in output, got '%s'", output)
 	}
 }
 
