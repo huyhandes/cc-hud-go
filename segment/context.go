@@ -26,14 +26,6 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 
 	percentage := s.Context.Percentage
 
-	// Choose icon based on thresholds
-	var icon = "🟢"
-	if percentage >= 90 {
-		icon = "🔴"
-	} else if percentage >= 70 {
-		icon = "🟡"
-	}
-
 	// Build gradient progress bar
 	bar := style.RenderGradientBar(percentage, 10)
 
@@ -54,8 +46,7 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 	}
 
 	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
-	mainDisplay := fmt.Sprintf("%s %s %s",
-		icon,
+	mainDisplay := fmt.Sprintf("%s %s",
 		bar,
 		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
 	)
