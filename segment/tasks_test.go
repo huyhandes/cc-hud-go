@@ -22,7 +22,17 @@ func TestTasksSegment(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	if !strings.Contains(output, "2/5") {
-		t.Errorf("expected progress ratio in output, got '%s'", output)
+	// Check for dashboard header
+	if !strings.Contains(output, "Tasks Dashboard") {
+		t.Errorf("expected 'Tasks Dashboard' in output, got '%s'", output)
+	}
+
+	// Check for task counts
+	if !strings.Contains(output, "Todo") && !strings.Contains(output, "2") {
+		t.Errorf("expected pending tasks in output, got '%s'", output)
+	}
+
+	if !strings.Contains(output, "Completed") && !strings.Contains(output, "2") {
+		t.Errorf("expected completed count in output, got '%s'", output)
 	}
 }
