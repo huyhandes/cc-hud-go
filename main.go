@@ -12,6 +12,8 @@ import (
 	"github.com/huybui/cc-hud-go/output"
 	"github.com/huybui/cc-hud-go/parser"
 	"github.com/huybui/cc-hud-go/state"
+	"github.com/huybui/cc-hud-go/style"
+	"github.com/huybui/cc-hud-go/theme"
 	"github.com/huybui/cc-hud-go/version"
 )
 
@@ -105,6 +107,10 @@ func main() {
 	if err != nil {
 		cfg = config.Default()
 	}
+
+	// Initialize theme and style system
+	themeInstance := theme.LoadThemeFromConfig(cfg.Theme, cfg.Colors)
+	style.Init(themeInstance)
 
 	// Initialize state
 	s := state.New()
