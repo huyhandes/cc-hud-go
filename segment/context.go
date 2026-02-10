@@ -26,28 +26,8 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 
 	percentage := s.Context.Percentage
 
-	// Choose style and icon based on thresholds
-	var barStyle = style.ProgressGood
-	var icon = "🟢"
-
-	if percentage >= 90 {
-		barStyle = style.ProgressDanger
-		icon = "🔴"
-	} else if percentage >= 70 {
-		barStyle = style.ProgressWarning
-		icon = "🟡"
-	}
-
-	// Build enhanced progress bar
-	barWidth := 10
-	filled := int(percentage / 10)
-	if filled > barWidth {
-		filled = barWidth
-	}
-
-	filledBar := strings.Repeat("●", filled)
-	emptyBar := strings.Repeat("○", barWidth-filled)
-	bar := filledBar + emptyBar
+	// Build gradient progress bar
+	bar := style.RenderGradientBar(percentage, 10)
 
 	// Format tokens in thousands (k)
 	formatTokens := func(tokens int) string {
@@ -57,13 +37,15 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		return fmt.Sprintf("%d", tokens)
 	}
 
-	// Main display with bar and percentage (matches bar color for consistency)
-	percentageStyle := barStyle // Match percentage color to bar status
-	mainDisplay := fmt.Sprintf("%s %s %s",
-		icon,
-		barStyle.Render(bar),
-		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
-	)
+	// Main display with bar and percentage
+	percentageColor := style.ColorSuccess
+	if percentage >= 90 {
+		percentageColor = style.ColorDanger
+	} else if percentage >= 70 {
+		percentageColor = style.ColorWarning
+	}
+
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
 
 	// Detailed token breakdown with semantic colors
 	details := []string{}
@@ -100,5 +82,10 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),
 	)
 
-	return fmt.Sprintf("%s %s", mainDisplay, strings.Join(details, " ")), nil
+	// Single line format for use in custom layouts
+	return fmt.Sprintf("%s %s %s",
+		bar,
+		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
+		strings.Join(details, " "),
+	), nil
 }

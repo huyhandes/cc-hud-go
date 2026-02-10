@@ -73,10 +73,16 @@ type AgentInfo struct {
 	ElapsedTime time.Duration
 }
 
+type Task struct {
+	Subject string
+	Status  string
+}
+
 type TaskInfo struct {
 	Pending    int
 	InProgress int
 	Completed  int
+	Details    []Task
 }
 
 type SessionInfo struct {

@@ -9,6 +9,8 @@ import (
 
 // Config holds all configuration options
 type Config struct {
+	Theme             string
+	Colors            map[string]string
 	Preset            string
 	LineLayout        string
 	PathLevels        int
@@ -17,6 +19,7 @@ type Config struct {
 	Display           DisplayConfig
 	Git               GitConfig
 	Tools             ToolsConfig
+	Tables            TableConfig
 }
 
 type DisplayConfig struct {
@@ -46,9 +49,17 @@ type ToolsConfig struct {
 	ShowMCP         bool
 }
 
+type TableConfig struct {
+	ToolsThreshold   int `json:"toolsTableThreshold"`
+	TasksThreshold   int `json:"tasksTableThreshold"`
+	ContextThreshold int `json:"contextTableThreshold"`
+}
+
 // Default returns a config with sensible defaults (full preset)
 func Default() *Config {
 	return &Config{
+		Theme:             "macchiato",
+		Colors:            make(map[string]string),
 		Preset:            "full",
 		LineLayout:        "expanded",
 		PathLevels:        2,
@@ -77,6 +88,11 @@ func Default() *Config {
 			ShowTopN:        5,
 			ShowSkills:      true,
 			ShowMCP:         true,
+		},
+		Tables: TableConfig{
+			ToolsThreshold:   999,  // Always use lipgloss inline view
+			TasksThreshold:   999,  // Always use lipgloss inline view
+			ContextThreshold: 999,
 		},
 	}
 }

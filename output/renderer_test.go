@@ -76,3 +76,31 @@ func TestRenderEmptyState(t *testing.T) {
 		t.Logf("Output: %s", output)
 	}
 }
+
+func TestJoinSegmentsWithSpacing(t *testing.T) {
+	segments := []string{"segment1", "segment2", "segment3"}
+
+	result := joinSegments(segments)
+
+	// Should have 2 spaces around separator
+	if !strings.Contains(result, "  │  ") {
+		t.Errorf("Expected two-space separator, got: %s", result)
+	}
+
+	// Count separators
+	sepCount := strings.Count(result, "│")
+	if sepCount != 2 {
+		t.Errorf("Expected 2 separators, got %d", sepCount)
+	}
+}
+
+func TestEmptySegmentsFiltering(t *testing.T) {
+	segments := []string{"segment1", "", "segment2"}
+
+	result := joinSegments(segments)
+
+	// Should filter out empty segments
+	if strings.Contains(result, "│  │") {
+		t.Error("Empty segments should be filtered out")
+	}
+}

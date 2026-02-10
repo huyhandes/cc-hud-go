@@ -362,8 +362,16 @@ func updateStateFromTasks(tracker *TaskTracker, s *state.State) {
 	s.Tasks.Pending = 0
 	s.Tasks.InProgress = 0
 	s.Tasks.Completed = 0
+	s.Tasks.Details = make([]state.Task, 0, len(tracker.Tasks))
 
 	for _, task := range tracker.Tasks {
+		// Add to details list
+		s.Tasks.Details = append(s.Tasks.Details, state.Task{
+			Subject: task.Content,
+			Status:  task.Status,
+		})
+
+		// Update counts
 		switch task.Status {
 		case "pending":
 			s.Tasks.Pending++

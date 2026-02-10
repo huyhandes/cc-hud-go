@@ -26,6 +26,12 @@ A Go-based statusline tool for [Claude Code](https://code.claude.com) that displ
 - **Task Progress** - Task completion tracking (completed/total)
 - **Agent Activity** - Active agent name and current task description
 
+### 🎨 Beautiful Themes & Visuals
+- **Catppuccin Color Palettes** - 4 carefully curated themes (Macchiato, Mocha, Frappe, Latte)
+- **Gradient Progress Bars** - Smooth color transitions with Unicode characters (█▓▒░)
+- **Smart Adaptive Layouts** - Automatic table rendering for detailed views
+- **Custom Color Overrides** - Override any semantic color with your preferences
+
 ### ⚙️ Flexible Configuration
 - **Multiple Presets** - Full, Essential, and Minimal display modes
 - **Granular Control** - Enable/disable individual segments
@@ -85,6 +91,99 @@ sudo mv cc-hud-go /usr/local/bin/
 go install github.com/huyhandes/cc-hud-go@latest
 ```
 
+## Themes & Visual Customization
+
+cc-hud-go features beautiful [Catppuccin](https://github.com/catppuccin/catppuccin) color palettes with gradient progress bars and smart adaptive layouts.
+
+### Available Themes
+
+**🌙 Macchiato** (default) - Dark theme with purple accents
+```json
+{ "theme": "macchiato" }
+```
+
+**🌑 Mocha** - Darkest variant with rich, deep colors
+```json
+{ "theme": "mocha" }
+```
+
+**🌆 Frappe** - Medium-dark with warmer tones
+```json
+{ "theme": "frappe" }
+```
+
+**☀️ Latte** - Light theme for bright environments
+```json
+{ "theme": "latte" }
+```
+
+### Visual Features
+
+**Gradient Progress Bars** - Smooth color transitions using Unicode block characters:
+```
+Context: 🧠 █▓▒░░░░░░░ 35%   ← Green (healthy)
+Context: 🧠 █▓▓▓▒▒▒░░░ 75%   ← Yellow (warning)
+Context: 🧠 █▓▓▓▓▓▒▒▒░ 95%   ← Red (danger)
+```
+
+**Smart Adaptive Layouts** - Automatic switching between inline and table views:
+- Below threshold: Compact inline display with icons
+- Above threshold: Detailed table view with sortable data
+- Configurable thresholds per segment type
+
+**Enhanced Spacing** - Clean separators for better readability:
+```
+Model │ Context │ Git │ Cost
+```
+
+### Custom Colors
+
+Override any semantic color while keeping the base theme:
+
+```json
+{
+  "theme": "macchiato",
+  "colors": {
+    "success": "#00ff00",
+    "warning": "#ffaa00",
+    "danger": "#ff0000",
+    "primary": "#00aaff"
+  }
+}
+```
+
+**Available semantic colors:**
+- `success` - Completed states, positive indicators (green)
+- `warning` - Warnings, medium thresholds (yellow/orange)
+- `danger` - Errors, high thresholds (red)
+- `input` - Input tokens (blue)
+- `output` - Output tokens (emerald)
+- `cacheRead` - Cache read tokens (purple)
+- `cacheWrite` - Cache write tokens (pink)
+- `primary` - Main brand color (purple)
+- `highlight` - Highlights and accents (cyan)
+- `accent` - Secondary accents (orange)
+- `muted` - Borders, subtle elements (gray)
+- `bright` - Bright text (white/cream)
+- `info` - Informational elements (teal)
+
+### Example Configs
+
+Pre-configured examples are available in the [`examples/`](examples/) directory:
+
+```bash
+# Copy Macchiato theme (default)
+cp examples/config-macchiato.json ~/.claude/cc-hud-go/config.json
+
+# Copy Mocha theme (darkest)
+cp examples/config-mocha.json ~/.claude/cc-hud-go/config.json
+
+# Copy custom colors example
+cp examples/config-custom-colors.json ~/.claude/cc-hud-go/config.json
+```
+
+See [`examples/README.md`](examples/README.md) for detailed theme documentation and customization guide.
+
 ## Usage
 
 ### Integration with Claude Code
@@ -139,6 +238,8 @@ Create `~/.claude/cc-hud-go/config.json`:
 
 ```json
 {
+  "theme": "macchiato",
+  "colors": {},
   "preset": "full",
   "lineLayout": "expanded",
   "pathLevels": 2,
@@ -167,6 +268,11 @@ Create `~/.claude/cc-hud-go/config.json`:
     "showTopN": 5,
     "showSkills": true,
     "showMCP": true
+  },
+  "tables": {
+    "toolsTableThreshold": 5,
+    "tasksTableThreshold": 3,
+    "contextTableThreshold": 999
   }
 }
 ```
@@ -198,6 +304,8 @@ Create `~/.claude/cc-hud-go/config.json`:
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
+| `theme` | string | `"macchiato"` | Color theme: `macchiato`, `mocha`, `frappe`, or `latte` |
+| `colors` | object | `{}` | Custom color overrides (hex codes) |
 | `preset` | string | `"full"` | Preset configuration: `full`, `essential`, or `minimal` |
 | `lineLayout` | string | `"expanded"` | Layout style: `expanded` or `compact` |
 | `pathLevels` | int | `2` | Number of directory levels to show (1-3) |
@@ -232,6 +340,19 @@ All boolean flags to enable/disable segments:
 - `showSkills` - Include skill usage in tool counts
 - `showMCP` - Include MCP tool usage in tool counts
 
+#### Table Options
+
+Smart adaptive rendering thresholds (switches from inline to table view):
+
+- `toolsTableThreshold` - Tool count threshold for table view (default: 5)
+- `tasksTableThreshold` - Task count threshold for table view (default: 3)
+- `contextTableThreshold` - Context size threshold for table view (default: 999)
+
+When the total count exceeds the threshold, the segment automatically switches to a detailed table view with:
+- Sortable columns
+- Filtered display (e.g., last 3 completed tasks)
+- Truncated long names for better readability
+
 ## Architecture
 
 ### Project Structure
@@ -247,8 +368,7 @@ cc-hud-go/
 ├── parser/          # Dual input parsing (stdin JSON & transcript JSONL)
 │   ├── parser.go
 │   ├── stdin_test.go
-│   ├── transcript_test.go
-│   └── tasks_test.go
+│   └── transcript_test.go
 ├── segment/         # Modular display segments
 │   ├── segment.go   # Segment interface & registry
 │   ├── model.go     # Model and plan type display
@@ -264,10 +384,15 @@ cc-hud-go/
 │   ├── renderer.go
 │   └── renderer_test.go
 ├── style/           # Lipgloss styling with semantic color system
-│   └── style.go
-├── version/         # Version detection and build info
-│   ├── version.go
-│   └── version_test.go
+│   ├── style.go
+│   └── table_test.go
+├── theme/           # Theme system with Catppuccin palettes
+│   ├── theme.go
+│   ├── catppuccin.go
+│   └── theme_test.go
+├── examples/        # Example configuration files
+│   ├── README.md
+│   └── config-*.json
 ├── internal/
 │   ├── git/         # Git integration via command execution
 │   │   ├── git.go
@@ -276,13 +401,9 @@ cc-hud-go/
 │       └── watcher.go
 ├── testdata/        # Test fixtures and sample data
 ├── docs/            # Documentation and planning
-│   ├── plans/       # Design and implementation plans
 │   └── COLOR_SCHEME.md
 ├── assets/          # Screenshots and preview images
 ├── main.go          # Application entry point
-├── main_test.go     # Main package tests
-├── integration_test.go  # Integration tests
-├── Makefile         # Build and development commands
 └── go.mod
 ```
 
@@ -317,19 +438,28 @@ Available segments:
 - Stdin parser for Claude Code session data (JSON)
 - Transcript parser for tool usage tracking (JSONL)
 
+**Theme System** - Catppuccin color palettes with customization:
+- 4 beautiful themes: Macchiato, Mocha, Frappe, Latte
+- Custom color override support
+- Theme interface for extensibility
+
 **Style System** - Semantic color palette using Lipgloss:
 - Status colors (green/yellow/red for thresholds)
 - Flow colors (blue for input, emerald for output)
 - Cache colors (purple for reads, pink for writes)
 - Primary UI colors (purple, cyan, orange)
+- Gradient progress bars with smooth color transitions
+- Smart table rendering with box-drawing characters
 - TrueColor support with forced color output
 
 **Renderer** - JSON output formatter for Claude Code statusline API
 
 ### Design Principles
 
-Built with the [Charm](https://charm.sh) ecosystem:
+Built with the [Charm](https://charm.sh) ecosystem and [Catppuccin](https://github.com/catppuccin/catppuccin) color palettes:
 - Clean, elegant terminal styling with [Lipgloss](https://github.com/charmbracelet/lipgloss)
+- Beautiful themes with Catppuccin color palettes
+- Gradient progress bars and smart adaptive layouts
 - Composable segment architecture
 - Clean separation between state, rendering, and configuration
 - Graceful degradation (missing config → defaults)
@@ -466,7 +596,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT License
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## Links
 

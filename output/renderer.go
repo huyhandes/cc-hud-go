@@ -1,6 +1,7 @@
 package output
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/huybui/cc-hud-go/config"
@@ -45,87 +46,165 @@ func renderSingleLine(s *state.State, cfg *config.Config) (string, error) {
 		parts = append(parts, text)
 	}
 
-	separator := style.Separator()
-	return strings.Join(parts, " "+separator+" "), nil
+	return joinSegments(parts), nil
 }
 
 func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
-	separator := style.Separator()
-
-	// Line 1: Model and Context (most important)
-	line1Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "model" || id == "context") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line1Parts = append(line1Parts, text)
-			}
-		}
-	}
-
-	// Line 2: Git, Cost, and operational metrics
-	line2Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "git" || id == "cost") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line2Parts = append(line2Parts, text)
-			}
-		}
-	}
-
-	// Line 3: Tools, Agent, and other info (excluding tasks)
-	line3Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "tools" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line3Parts = append(line3Parts, text)
-			}
-		}
-	}
-
-	// Line 4: Tasks (dedicated line for dashboard display)
-	line4Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if id == "tasks" && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line4Parts = append(line4Parts, text)
-			}
-		}
-	}
-
-	// Build output
+	// Custom 4-line layout as requested
 	var lines []string
-	if len(line1Parts) > 0 {
-		lines = append(lines, strings.Join(line1Parts, " "+separator+" "))
+
+	// Line 1: Model | Context | Token
+	line1 := []string{}
+	for _, seg := range segment.All() {
+		id := seg.ID()
+		if id == "model" && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				line1 = append(line1, text)
+			}
+		}
 	}
-	if len(line2Parts) > 0 {
-		lines = append(lines, strings.Join(line2Parts, " "+separator+" "))
+	// Add context bar inline
+	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+		line1 = append(line1, renderContextBar(s))
 	}
-	if len(line3Parts) > 0 {
-		lines = append(lines, strings.Join(line3Parts, " "+separator+" "))
+	if len(line1) > 0 {
+		lines = append(lines, joinSegments(line1))
 	}
-	if len(line4Parts) > 0 {
-		lines = append(lines, strings.Join(line4Parts, " "+separator+" "))
+
+	// Line 2: Input/Output tokens | Cost (without file changes)
+	line2 := []string{}
+	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+		line2 = append(line2, renderTokenDetails(s))
+	}
+	for _, seg := range segment.All() {
+		if seg.ID() == "cost" && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				line2 = append(line2, text)
+			}
+		}
+	}
+	if len(line2) > 0 {
+		lines = append(lines, joinSegments(line2))
+	}
+
+	// Line 3: Git | File changes
+	line3 := []string{}
+	for _, seg := range segment.All() {
+		id := seg.ID()
+		if id == "git" && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				line3 = append(line3, text)
+			}
+		}
+	}
+	// Add file changes to git line
+	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
+		line3 = append(line3, renderFileChanges(s))
+	}
+	if len(line3) > 0 {
+		lines = append(lines, joinSegments(line3))
+	}
+
+	// Line 4+: Each tool/task segment on its own line
+	for _, seg := range segment.All() {
+		id := seg.ID()
+		if (id == "tools" || id == "tasks" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				lines = append(lines, text)
+			}
+		}
 	}
 
 	return strings.Join(lines, "\n"), nil
+}
+
+// renderContextBar renders just the progress bar and percentage
+func renderContextBar(s *state.State) string {
+	percentage := s.Context.Percentage
+
+	// Use style package's gradient bar which has colors
+	bar := style.RenderGradientBar(percentage, 10)
+
+	// Color the percentage text based on threshold
+	percentageColor := style.ColorSuccess
+	if percentage >= 90 {
+		percentageColor = style.ColorDanger
+	} else if percentage >= 70 {
+		percentageColor = style.ColorWarning
+	}
+
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
+	percentageText := percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage))
+
+	return fmt.Sprintf("%s %s", bar, percentageText)
+}
+
+// renderTokenDetails renders token breakdown with colors
+func renderTokenDetails(s *state.State) string {
+	formatTokens := func(tokens int) string {
+		if tokens >= 1000 {
+			return fmt.Sprintf("%dk", tokens/1000)
+		}
+		return fmt.Sprintf("%d", tokens)
+	}
+
+	details := []string{}
+
+	// Input tokens - Blue
+	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
+	details = append(details, fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))))
+
+	// Output tokens - Emerald/Green
+	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
+	details = append(details, fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))))
+
+	// Cache stats if available
+	if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
+		cacheReadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheRead)
+		cacheWriteStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheWrite)
+		details = append(details, fmt.Sprintf("💾 %s%s%s",
+			cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
+			style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+			cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens))))
+	}
+
+	// Total context size - Muted gray
+	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
+	details = append(details, fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))))
+
+	return strings.Join(details, " ")
+}
+
+// renderFileChanges renders file changes (lines added/removed)
+func renderFileChanges(s *state.State) string {
+	if s.Cost.LinesAdded == 0 && s.Cost.LinesRemoved == 0 {
+		return ""
+	}
+
+	addStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+	removeStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
+
+	return fmt.Sprintf("📝 %s%s%s",
+		addStyle.Render(fmt.Sprintf("+%d", s.Cost.LinesAdded)),
+		style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+		removeStyle.Render(fmt.Sprintf("-%d", s.Cost.LinesRemoved)),
+	)
+}
+
+
+// joinSegments joins segment outputs with two-space separators
+func joinSegments(segments []string) string {
+	// Filter out empty segments
+	nonEmpty := make([]string, 0, len(segments))
+	for _, seg := range segments {
+		if strings.TrimSpace(seg) != "" {
+			nonEmpty = append(nonEmpty, seg)
+		}
+	}
+
+	return strings.Join(nonEmpty, "  │  ")
 }

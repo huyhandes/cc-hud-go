@@ -48,26 +48,18 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 		parts = append(parts, durationStyle.Render(durationStr))
 	}
 
-	// Show lines changed with code icon - Split colors for +/-
-	if st.Cost.LinesAdded > 0 || st.Cost.LinesRemoved > 0 {
-		addStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
-		removeStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
-		linesStr := fmt.Sprintf("📝 %s%s%s",
-			addStyle.Render(fmt.Sprintf("+%d", st.Cost.LinesAdded)),
-			style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
-			removeStyle.Render(fmt.Sprintf("-%d", st.Cost.LinesRemoved)),
-		)
-		parts = append(parts, linesStr)
-	}
+	// File changes moved to git line in multi-line layout
+	// (removed from here to avoid duplication)
 
 	if len(parts) == 0 {
 		return "", nil
 	}
 
+	// Join with separator for better visual separation
 	result := ""
 	for i, part := range parts {
 		if i > 0 {
-			result += " "
+			result += "  │  "
 		}
 		result += part
 	}
