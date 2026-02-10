@@ -73,3 +73,38 @@ func TestAllCatppuccinFlavors(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadFromConfig(t *testing.T) {
+	// Mock config structure
+	type Config struct {
+		Theme  string
+		Colors map[string]string
+	}
+
+	cfg := Config{
+		Theme: "mocha",
+		Colors: map[string]string{
+			"success": "#00ff00",
+		},
+	}
+
+	// Create a theme wrapper that can apply overrides
+	wrapper := LoadThemeFromConfig(cfg.Theme, cfg.Colors)
+
+	// Check base theme
+	if wrapper.Name() != "mocha" {
+		t.Errorf("Expected theme 'mocha', got %s", wrapper.Name())
+	}
+
+	// Check override applied
+	successColor := wrapper.GetColor("success")
+	if string(successColor) != "#00ff00" {
+		t.Errorf("Expected override color #00ff00, got %s", successColor)
+	}
+
+	// Check non-overridden color uses theme default
+	warningColor := wrapper.GetColor("warning")
+	if warningColor == lipgloss.Color("") {
+		t.Error("Expected warning color from theme")
+	}
+}

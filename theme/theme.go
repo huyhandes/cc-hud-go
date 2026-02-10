@@ -23,3 +23,36 @@ func GetTheme(name string) Theme {
 		return NewMacchiato() // fallback to macchiato
 	}
 }
+
+// ThemeWrapper wraps a theme and applies color overrides
+type ThemeWrapper struct {
+	base      Theme
+	overrides map[string]string
+}
+
+func (tw *ThemeWrapper) Name() string {
+	return tw.base.Name()
+}
+
+func (tw *ThemeWrapper) GetColor(semantic string) lipgloss.Color {
+	// Check for override first
+	if color, ok := tw.overrides[semantic]; ok {
+		return lipgloss.Color(color)
+	}
+	// Fall back to base theme
+	return tw.base.GetColor(semantic)
+}
+
+// LoadThemeFromConfig loads a theme and applies color overrides
+func LoadThemeFromConfig(themeName string, colorOverrides map[string]string) Theme {
+	base := GetTheme(themeName)
+
+	if len(colorOverrides) == 0 {
+		return base
+	}
+
+	return &ThemeWrapper{
+		base:      base,
+		overrides: colorOverrides,
+	}
+}
