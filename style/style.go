@@ -3,6 +3,7 @@ package style
 import (
 	"io"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
@@ -110,4 +111,66 @@ func Separator() string {
 // Icon renders a styled icon
 func Icon(icon string, style lipgloss.Style) string {
 	return style.Render(icon)
+}
+
+// RenderGradientBar renders a gradient progress bar
+func RenderGradientBar(percentage float64, width int) string {
+	if width <= 0 {
+		width = 10
+	}
+	if percentage < 0 {
+		percentage = 0
+	}
+	if percentage > 100 {
+		percentage = 100
+	}
+
+	filled := int(percentage / 100 * float64(width))
+	if filled > width {
+		filled = width
+	}
+
+	segments := make([]string, 0, width)
+
+	for i := 0; i < width; i++ {
+		if i < filled {
+			// Use gradient characters for filled portion
+			char := getGradientChar(i, filled, width)
+			color := getColorForPercentage(percentage)
+			segments = append(segments, renderer.NewStyle().Foreground(color).Render(char))
+		} else {
+			// Empty portion
+			segments = append(segments, renderer.NewStyle().Foreground(ColorMuted).Render("░"))
+		}
+	}
+
+	return strings.Join(segments, "")
+}
+
+// getGradientChar returns the appropriate gradient character
+func getGradientChar(position, filled, width int) string {
+	if filled == 0 {
+		return "░"
+	}
+
+	// Use different characters based on position in filled area
+	progress := float64(position) / float64(filled)
+
+	if progress < 0.3 {
+		return "█" // solid
+	} else if progress < 0.6 {
+		return "▓" // dark
+	} else {
+		return "▒" // medium
+	}
+}
+
+// getColorForPercentage returns color based on percentage thresholds
+func getColorForPercentage(percentage float64) lipgloss.Color {
+	if percentage >= 90 {
+		return ColorDanger // red
+	} else if percentage >= 70 {
+		return ColorWarning // yellow/orange
+	}
+	return ColorSuccess // green
 }
