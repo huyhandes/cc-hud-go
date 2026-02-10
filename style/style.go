@@ -193,3 +193,79 @@ func getColorForPercentage(percentage float64) lipgloss.Color {
 	}
 	return ColorSuccess // green
 }
+
+// RenderTable renders a table with headers and rows using lipgloss
+func RenderTable(headers []string, rows [][]string) string {
+	// Calculate column widths
+	widths := make([]int, len(headers))
+	for i, h := range headers {
+		widths[i] = len(h)
+	}
+
+	for _, row := range rows {
+		for i, cell := range row {
+			if i < len(widths) && len(cell) > widths[i] {
+				widths[i] = len(cell)
+			}
+		}
+	}
+
+	var result strings.Builder
+
+	// Top border
+	result.WriteString("┌")
+	for i, w := range widths {
+		result.WriteString(strings.Repeat("─", w+2))
+		if i < len(widths)-1 {
+			result.WriteString("┬")
+		}
+	}
+	result.WriteString("┐\n")
+
+	// Headers
+	result.WriteString("│")
+	for i, h := range headers {
+		result.WriteString(" ")
+		result.WriteString(h)
+		result.WriteString(strings.Repeat(" ", widths[i]-len(h)+1))
+		result.WriteString("│")
+	}
+	result.WriteString("\n")
+
+	// Header separator
+	result.WriteString("├")
+	for i, w := range widths {
+		result.WriteString(strings.Repeat("─", w+2))
+		if i < len(widths)-1 {
+			result.WriteString("┼")
+		}
+	}
+	result.WriteString("┤\n")
+
+	// Rows
+	for _, row := range rows {
+		result.WriteString("│")
+		for i, cell := range row {
+			if i >= len(widths) {
+				break
+			}
+			result.WriteString(" ")
+			result.WriteString(cell)
+			result.WriteString(strings.Repeat(" ", widths[i]-len(cell)+1))
+			result.WriteString("│")
+		}
+		result.WriteString("\n")
+	}
+
+	// Bottom border
+	result.WriteString("└")
+	for i, w := range widths {
+		result.WriteString(strings.Repeat("─", w+2))
+		if i < len(widths)-1 {
+			result.WriteString("┴")
+		}
+	}
+	result.WriteString("┘")
+
+	return result.String()
+}
