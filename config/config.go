@@ -90,8 +90,8 @@ func Default() *Config {
 			ShowMCP:         true,
 		},
 		Tables: TableConfig{
-			ToolsThreshold:   5,
-			TasksThreshold:   3,
+			ToolsThreshold:   999,  // Always use lipgloss inline view
+			TasksThreshold:   999,  // Always use lipgloss inline view
 			ContextThreshold: 999,
 		},
 	}
