@@ -2,6 +2,7 @@ package segment
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
@@ -20,50 +21,76 @@ func (t *ToolsSegment) Enabled(cfg *config.Config) bool {
 }
 
 func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error) {
-	// Count totals
+	toolCount := t.getTotalCount(s)
+
+	if toolCount == 0 {
+		return "", nil
+	}
+
+	// Check if we should use table view
+	if toolCount > cfg.Tables.ToolsThreshold {
+		return t.renderTable(s, cfg)
+	}
+
+	// Inline view
+	return t.renderInline(s, cfg)
+}
+
+func (t *ToolsSegment) getTotalCount(s *state.State) int {
+	total := 0
+
+	for _, count := range s.Tools.AppTools {
+		total += count
+	}
+	for _, count := range s.Tools.InternalTools {
+		total += count
+	}
+	for _, count := range s.Tools.CustomTools {
+		total += count
+	}
+	for _, tools := range s.Tools.MCPTools {
+		for _, count := range tools {
+			total += count
+		}
+	}
+	for _, usage := range s.Tools.Skills {
+		total += usage.Count
+	}
+
+	return total
+}
+
+func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string, error) {
+	toolCount := t.getTotalCount(s)
+
+	// Simple inline display if not grouped
+	if !cfg.Tools.GroupByCategory {
+		icon := "🔧"
+		toolsMainStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, toolCount)), nil
+	}
+
+	// Enhanced lipgloss display when grouped by category
+	icon := "🔧"
 	appTotal := 0
 	for _, count := range s.Tools.AppTools {
 		appTotal += count
 	}
-
-	internalTotal := 0
-	for _, count := range s.Tools.InternalTools {
-		internalTotal += count
-	}
-
-	customTotal := 0
-	for _, count := range s.Tools.CustomTools {
-		customTotal += count
-	}
-
 	mcpTotal := 0
 	for _, tools := range s.Tools.MCPTools {
 		for _, count := range tools {
 			mcpTotal += count
 		}
 	}
-
 	skillsTotal := 0
 	for _, usage := range s.Tools.Skills {
 		skillsTotal += usage.Count
 	}
-
-	total := appTotal + internalTotal + customTotal + mcpTotal + skillsTotal
-
-	if total == 0 {
-		return "", nil
+	customTotal := 0
+	for _, count := range s.Tools.CustomTools {
+		customTotal += count
 	}
 
-	// Build output with icon - Teal/Info color (distinct from other segments)
-	icon := "🔧"
-	toolsMainStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
-
-	// Simple inline display if not grouped
-	if !cfg.Tools.GroupByCategory {
-		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
-	}
-
-	// Enhanced lipgloss display when grouped by category
 	borderColor := lipgloss.Color("240")
 	headerColor := lipgloss.Color("14")      // Cyan
 	appColor := lipgloss.Color("12")         // Blue
@@ -87,7 +114,7 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 		Width(6)
 
 	// Build header
-	header := headerStyle.Render(fmt.Sprintf("%s Tool Usage (%d)", icon, total))
+	header := headerStyle.Render(fmt.Sprintf("%s Tool Usage (%d)", icon, toolCount))
 
 	// Build rows for each category
 	var rows []string
@@ -130,7 +157,9 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 
 	// If no categories to show, just show total
 	if len(rows) == 0 {
-		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
+		icon := "🔧"
+		toolsMainStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
+		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, toolCount)), nil
 	}
 
 	// Combine header and rows
@@ -147,4 +176,60 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 		Padding(0, 1)
 
 	return boxStyle.Render(content), nil
+}
+
+func (t *ToolsSegment) renderTable(s *state.State, cfg *config.Config) (string, error) {
+	headers := []string{"Category", "Count"}
+	rows := [][]string{}
+
+	// Collect categories with counts
+	categories := make(map[string]int)
+
+	appTotal := 0
+	for _, count := range s.Tools.AppTools {
+		appTotal += count
+	}
+	if appTotal > 0 {
+		categories["App"] = appTotal
+	}
+
+	mcpTotal := 0
+	for _, tools := range s.Tools.MCPTools {
+		for _, count := range tools {
+			mcpTotal += count
+		}
+	}
+	if mcpTotal > 0 && cfg.Tools.ShowMCP {
+		categories["MCP"] = mcpTotal
+	}
+
+	skillsTotal := 0
+	for _, usage := range s.Tools.Skills {
+		skillsTotal += usage.Count
+	}
+	if skillsTotal > 0 && cfg.Tools.ShowSkills {
+		categories["Skills"] = skillsTotal
+	}
+
+	customTotal := 0
+	for _, count := range s.Tools.CustomTools {
+		customTotal += count
+	}
+	if customTotal > 0 {
+		categories["Custom"] = customTotal
+	}
+
+	// Sort categories for consistent order
+	categoryNames := make([]string, 0, len(categories))
+	for cat := range categories {
+		categoryNames = append(categoryNames, cat)
+	}
+	sort.Strings(categoryNames)
+
+	for _, cat := range categoryNames {
+		count := categories[cat]
+		rows = append(rows, []string{cat, fmt.Sprintf("%d", count)})
+	}
+
+	return style.RenderTable(headers, rows), nil
 }
