@@ -11,9 +11,15 @@ type Theme interface {
 // GetTheme returns a theme by name, falls back to macchiato
 func GetTheme(name string) Theme {
 	switch name {
+	case "mocha":
+		return NewMocha()
 	case "macchiato":
 		return NewMacchiato()
+	case "frappe":
+		return NewFrappe()
+	case "latte":
+		return NewLatte()
 	default:
-		return NewMacchiato() // fallback
+		return NewMacchiato() // fallback to macchiato
 	}
 }

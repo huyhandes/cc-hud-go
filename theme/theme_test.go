@@ -48,3 +48,28 @@ func TestMacchiatoColors(t *testing.T) {
 		})
 	}
 }
+
+func TestAllCatppuccinFlavors(t *testing.T) {
+	flavors := []string{"mocha", "macchiato", "frappe", "latte"}
+
+	for _, flavor := range flavors {
+		t.Run(flavor, func(t *testing.T) {
+			theme := GetTheme(flavor)
+			if theme == nil {
+				t.Errorf("GetTheme(%s) returned nil", flavor)
+			}
+			if theme.Name() != flavor {
+				t.Errorf("Expected theme name %s, got %s", flavor, theme.Name())
+			}
+
+			// Verify all semantic colors exist
+			semantics := []string{"success", "warning", "danger", "input", "output"}
+			for _, semantic := range semantics {
+				color := theme.GetColor(semantic)
+				if color == lipgloss.Color("") {
+					t.Errorf("Theme %s missing color for %s", flavor, semantic)
+				}
+			}
+		})
+	}
+}
