@@ -18,11 +18,12 @@ build:
 	go build $(LDFLAGS) -o $(BINARY_NAME) .
 	@echo "Build complete: ./$(BINARY_NAME)"
 
-## install: Build and install to GOPATH/bin
-install:
+## install: Build and install to ~/.local/bin
+install: build
 	@echo "Installing $(BINARY_NAME) $(VERSION)..."
-	go install $(LDFLAGS) .
-	@echo "Installed to $(shell go env GOPATH)/bin/$(BINARY_NAME)"
+	@mkdir -p ~/.local/bin
+	@cp $(BINARY_NAME) ~/.local/bin/$(BINARY_NAME)
+	@echo "Installed to ~/.local/bin/$(BINARY_NAME)"
 
 ## run: Build and run the application
 run: build

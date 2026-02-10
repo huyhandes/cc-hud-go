@@ -26,7 +26,17 @@ func (r *RateLimitSegment) Render(s *state.State, cfg *config.Config) (string, e
 	// Prefer OAuth API data (more accurate)
 	if s.RateLimits.SevenDayPercent > 0 {
 		bar7d := style.RenderGradientBar(s.RateLimits.SevenDayPercent, 10)
-		return fmt.Sprintf("📊 %s %.0f%%", bar7d, s.RateLimits.SevenDayPercent), nil
+
+		// Color the percentage based on threshold
+		percentColor := style.ColorSuccess
+		if s.RateLimits.SevenDayPercent >= 90 {
+			percentColor = style.ColorDanger
+		} else if s.RateLimits.SevenDayPercent >= 70 {
+			percentColor = style.ColorWarning
+		}
+
+		percentStyle := style.GetRenderer().NewStyle().Foreground(percentColor)
+		return fmt.Sprintf("📊 %s %s", bar7d, percentStyle.Render(fmt.Sprintf("%.0f%%", s.RateLimits.SevenDayPercent))), nil
 	}
 
 	// Fallback to stdin data (if provided)
@@ -37,7 +47,16 @@ func (r *RateLimitSegment) Render(s *state.State, cfg *config.Config) (string, e
 	sevenDayPercentage := float64(s.RateLimits.SevenDayUsed) / float64(s.RateLimits.SevenDayTotal) * 100.0
 	bar := style.RenderGradientBar(sevenDayPercentage, 10)
 
-	return fmt.Sprintf("📊 %s %.0f%%", bar, sevenDayPercentage), nil
+	// Color the percentage based on threshold
+	percentColor := style.ColorSuccess
+	if sevenDayPercentage >= 90 {
+		percentColor = style.ColorDanger
+	} else if sevenDayPercentage >= 70 {
+		percentColor = style.ColorWarning
+	}
+
+	percentStyle := style.GetRenderer().NewStyle().Foreground(percentColor)
+	return fmt.Sprintf("📊 %s %s", bar, percentStyle.Render(fmt.Sprintf("%.0f%%", sevenDayPercentage))), nil
 }
 
 // FiveHourSegment displays 5-hour rate limit with elapsed time
@@ -58,6 +77,16 @@ func (f *FiveHourSegment) Render(s *state.State, cfg *config.Config) (string, er
 	}
 
 	bar5h := style.RenderGradientBar(s.RateLimits.FiveHourPercent, 10)
+
+	// Color the percentage based on threshold
+	percentColor := style.ColorSuccess
+	if s.RateLimits.FiveHourPercent >= 90 {
+		percentColor = style.ColorDanger
+	} else if s.RateLimits.FiveHourPercent >= 70 {
+		percentColor = style.ColorWarning
+	}
+
+	percentStyle := style.GetRenderer().NewStyle().Foreground(percentColor)
 
 	// Calculate time remaining in 5h window
 	timeInfo := ""
@@ -80,5 +109,5 @@ func (f *FiveHourSegment) Render(s *state.State, cfg *config.Config) (string, er
 		}
 	}
 
-	return fmt.Sprintf("⏱️ %s %.0f%%%s", bar5h, s.RateLimits.FiveHourPercent, timeInfo), nil
+	return fmt.Sprintf("⏱️ %s %s%s", bar5h, percentStyle.Render(fmt.Sprintf("%.0f%%", s.RateLimits.FiveHourPercent)), timeInfo), nil
 }
