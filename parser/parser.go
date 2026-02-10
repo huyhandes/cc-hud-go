@@ -3,7 +3,9 @@ package parser
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/huybui/cc-hud-go/state"
@@ -163,18 +165,268 @@ func CategorizeTool(name string) ToolCategory {
 }
 
 type TranscriptLine struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
+	Type    string          `json:"type"`
+	Name    string          `json:"name"` // For backward compatibility with simple format
+	Message *MessageWrapper `json:"message"`
+}
+
+type MessageWrapper struct {
+	Content []ContentBlock `json:"content"`
+}
+
+type ContentBlock struct {
+	Type  string                 `json:"type"`
+	ID    string                 `json:"id"`
+	Name  string                 `json:"name"`
+	Input map[string]interface{} `json:"input"`
+}
+
+// TaskItem represents a tracked task from TodoWrite/TaskCreate/TaskUpdate
+type TaskItem struct {
+	ID      string // Task ID from TaskCreate/TaskUpdate
+	Content string // Subject or description
+	Status  string // pending, in_progress, completed, deleted
+}
+
+// TaskTracker maintains task state during transcript parsing
+type TaskTracker struct {
+	Tasks     []TaskItem
+	TaskIDMap map[string]int // Maps task ID to index in Tasks slice
+}
+
+// normalizeTaskStatus normalizes various status strings to standard values
+func normalizeTaskStatus(status string) string {
+	switch strings.ToLower(status) {
+	case "completed", "complete", "done":
+		return "completed"
+	case "in_progress", "running":
+		return "in_progress"
+	case "pending", "not_started", "":
+		return "pending"
+	case "deleted":
+		return "deleted"
+	default:
+		return "pending"
+	}
+}
+
+// processTaskTool processes task-related tool calls (TodoWrite, TaskCreate, TaskUpdate)
+func processTaskTool(block ContentBlock, tracker *TaskTracker) {
+	switch block.Name {
+	case "TodoWrite":
+		// Bulk replace all tasks
+		todos, ok := block.Input["todos"].([]interface{})
+		if !ok {
+			return
+		}
+
+		// Clear existing tasks
+		tracker.Tasks = nil
+		tracker.TaskIDMap = make(map[string]int)
+
+		// Add all tasks from TodoWrite
+		for _, t := range todos {
+			todo, ok := t.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			content := ""
+			if c, ok := todo["content"].(string); ok {
+				content = c
+			}
+
+			status := "pending"
+			if s, ok := todo["status"].(string); ok {
+				status = normalizeTaskStatus(s)
+			}
+
+			if status != "deleted" {
+				tracker.Tasks = append(tracker.Tasks, TaskItem{
+					Content: content,
+					Status:  status,
+				})
+			}
+		}
+
+	case "TaskCreate":
+		// Create a new task
+		subject := ""
+		if s, ok := block.Input["subject"].(string); ok {
+			subject = s
+		}
+		description := ""
+		if d, ok := block.Input["description"].(string); ok {
+			description = d
+		}
+
+		content := subject
+		if content == "" {
+			content = description
+		}
+		if content == "" {
+			content = "Untitled task"
+		}
+
+		status := "pending"
+		if s, ok := block.Input["status"].(string); ok {
+			status = normalizeTaskStatus(s)
+		}
+
+		// Add task
+		index := len(tracker.Tasks)
+		tracker.Tasks = append(tracker.Tasks, TaskItem{
+			Content: content,
+			Status:  status,
+		})
+
+		// Map task ID to index for later updates
+		if taskID, ok := block.Input["taskId"].(string); ok {
+			tracker.TaskIDMap[taskID] = index
+		} else if taskID, ok := block.Input["taskId"].(float64); ok {
+			tracker.TaskIDMap[fmt.Sprintf("%.0f", taskID)] = index
+		}
+		// Also map by block ID as fallback
+		if block.ID != "" {
+			tracker.TaskIDMap[block.ID] = index
+		}
+
+	case "TaskUpdate":
+		// Update an existing task
+		taskID := resolveTaskID(block.Input["taskId"])
+		if taskID == "" {
+			return
+		}
+
+		// Find task by ID or index
+		index := -1
+		if idx, ok := tracker.TaskIDMap[taskID]; ok {
+			index = idx
+		} else if idxNum, err := strconv.Atoi(taskID); err == nil && idxNum >= 0 && idxNum < len(tracker.Tasks) {
+			index = idxNum
+		}
+
+		if index < 0 || index >= len(tracker.Tasks) {
+			return
+		}
+
+		// Update status if provided
+		if s, ok := block.Input["status"].(string); ok {
+			newStatus := normalizeTaskStatus(s)
+
+			// Handle deletion by removing from list
+			if newStatus == "deleted" {
+				// Remove task by index
+				tracker.Tasks = append(tracker.Tasks[:index], tracker.Tasks[index+1:]...)
+				// Rebuild ID map
+				newMap := make(map[string]int)
+				for id, idx := range tracker.TaskIDMap {
+					if idx < index {
+						newMap[id] = idx
+					} else if idx > index {
+						newMap[id] = idx - 1
+					}
+				}
+				tracker.TaskIDMap = newMap
+				return
+			}
+
+			tracker.Tasks[index].Status = newStatus
+		}
+
+		// Update content if provided
+		if s, ok := block.Input["subject"].(string); ok && s != "" {
+			tracker.Tasks[index].Content = s
+		} else if d, ok := block.Input["description"].(string); ok && d != "" {
+			tracker.Tasks[index].Content = d
+		}
+	}
+}
+
+// resolveTaskID extracts task ID from various input types
+func resolveTaskID(taskID interface{}) string {
+	switch v := taskID.(type) {
+	case string:
+		return v
+	case float64:
+		return fmt.Sprintf("%.0f", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	default:
+		return ""
+	}
+}
+
+// updateStateFromTasks updates state task counts from tracker
+func updateStateFromTasks(tracker *TaskTracker, s *state.State) {
+	s.Tasks.Pending = 0
+	s.Tasks.InProgress = 0
+	s.Tasks.Completed = 0
+
+	for _, task := range tracker.Tasks {
+		switch task.Status {
+		case "pending":
+			s.Tasks.Pending++
+		case "in_progress":
+			s.Tasks.InProgress++
+		case "completed":
+			s.Tasks.Completed++
+		}
+	}
 }
 
 // ParseTranscriptLine parses a single JSONL line and updates state
 func ParseTranscriptLine(data []byte, s *state.State) error {
+	return ParseTranscriptLineWithTracker(data, s, nil)
+}
+
+// ParseTranscriptLineWithTracker parses a single JSONL line with task tracking
+func ParseTranscriptLineWithTracker(data []byte, s *state.State, tracker *TaskTracker) error {
 	var line TranscriptLine
 	if err := json.Unmarshal(data, &line); err != nil {
 		return err
 	}
 
-	// Only process tool_use events
+	// Handle nested message structure (assistant messages with tool calls)
+	if line.Message != nil && len(line.Message.Content) > 0 {
+		for _, block := range line.Message.Content {
+			if block.Type == "tool_use" {
+				// Process task-related tools if tracker is provided
+				if tracker != nil && (block.Name == "TodoWrite" || block.Name == "TaskCreate" || block.Name == "TaskUpdate") {
+					processTaskTool(block, tracker)
+				}
+
+				// Process regular tool tracking
+				category := CategorizeTool(block.Name)
+				switch category {
+				case CategoryApp:
+					s.Tools.AppTools[block.Name]++
+				case CategoryInternal:
+					s.Tools.InternalTools[block.Name]++
+				case CategoryCustom:
+					s.Tools.CustomTools[block.Name]++
+				case CategoryMCP:
+					parts := strings.Split(block.Name, "__")
+					if len(parts) >= 3 {
+						server := state.MCPServer{
+							Name: parts[1],
+							Type: "mcp",
+						}
+						if s.Tools.MCPTools[server] == nil {
+							s.Tools.MCPTools[server] = make(map[string]int)
+						}
+						toolName := strings.Join(parts[2:], "__")
+						s.Tools.MCPTools[server][toolName]++
+					}
+				case CategorySkill:
+					s.Tools.AppTools["Skill"]++
+				}
+			}
+		}
+		return nil
+	}
+
+	// Handle simple format (backward compatibility for old tool_use events)
 	if line.Type != "tool_use" {
 		return nil
 	}
@@ -227,15 +479,28 @@ func ParseTranscript(path string, s *state.State) error {
 		_ = file.Close()
 	}()
 
+	// Initialize task tracker
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
 	scanner := bufio.NewScanner(file)
+	// Increase buffer size for large transcript lines
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024) // Max 1MB per line
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
 			continue
 		}
 		// Ignore errors from individual lines, just continue
-		_ = ParseTranscriptLine(line, s)
+		_ = ParseTranscriptLineWithTracker(line, s, tracker)
 	}
+
+	// Update state with final task counts
+	updateStateFromTasks(tracker, s)
 
 	return scanner.Err()
 }

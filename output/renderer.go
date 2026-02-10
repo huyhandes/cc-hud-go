@@ -82,17 +82,32 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		}
 	}
 
-	// Line 3: Tools, Agent, and other info
+	// Line 3: Tools, Agent, and other info (excluding tasks)
 	line3Parts := []string{}
 	for _, seg := range segment.All() {
 		id := seg.ID()
-		if (id == "tools" || id == "agent" || id == "tasks" || id == "ratelimit") && seg.Enabled(cfg) {
+		if (id == "tools" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
 			text, err := seg.Render(s, cfg)
 			if err != nil {
 				return "", err
 			}
 			if text != "" {
 				line3Parts = append(line3Parts, text)
+			}
+		}
+	}
+
+	// Line 4: Tasks (dedicated line for dashboard display)
+	line4Parts := []string{}
+	for _, seg := range segment.All() {
+		id := seg.ID()
+		if id == "tasks" && seg.Enabled(cfg) {
+			text, err := seg.Render(s, cfg)
+			if err != nil {
+				return "", err
+			}
+			if text != "" {
+				line4Parts = append(line4Parts, text)
 			}
 		}
 	}
@@ -107,6 +122,9 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	}
 	if len(line3Parts) > 0 {
 		lines = append(lines, strings.Join(line3Parts, " "+separator+" "))
+	}
+	if len(line4Parts) > 0 {
+		lines = append(lines, strings.Join(line4Parts, " "+separator+" "))
 	}
 
 	return strings.Join(lines, "\n"), nil

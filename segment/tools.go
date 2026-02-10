@@ -2,8 +2,8 @@ package segment
 
 import (
 	"fmt"
-	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/state"
 	"github.com/huybui/cc-hud-go/style"
@@ -55,26 +55,96 @@ func (t *ToolsSegment) Render(s *state.State, cfg *config.Config) (string, error
 	}
 
 	// Build output with icon - Teal/Info color (distinct from other segments)
-	var parts []string
 	icon := "🔧"
 	toolsMainStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
 
-	if cfg.Tools.GroupByCategory {
-		if appTotal > 0 {
-			parts = append(parts, fmt.Sprintf("App:%d", appTotal))
-		}
-		if mcpTotal > 0 && cfg.Tools.ShowMCP {
-			parts = append(parts, fmt.Sprintf("MCP:%d", mcpTotal))
-		}
-		if skillsTotal > 0 && cfg.Tools.ShowSkills {
-			parts = append(parts, fmt.Sprintf("Skills:%d", skillsTotal))
-		}
-		if customTotal > 0 {
-			parts = append(parts, fmt.Sprintf("Custom:%d", customTotal))
-		}
-
-		return toolsMainStyle.Render(fmt.Sprintf("%s %d (%s)", icon, total, strings.Join(parts, " "))), nil
+	// Simple inline display if not grouped
+	if !cfg.Tools.GroupByCategory {
+		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
 	}
 
-	return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
+	// Enhanced lipgloss display when grouped by category
+	borderColor := lipgloss.Color("240")
+	headerColor := lipgloss.Color("14")      // Cyan
+	appColor := lipgloss.Color("12")         // Blue
+	mcpColor := lipgloss.Color("13")         // Magenta
+	skillsColor := lipgloss.Color("11")      // Yellow
+	customColor := lipgloss.Color("10")      // Green
+
+	// Styles
+	headerStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(headerColor).
+		Width(22)
+
+	labelStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("245")).
+		Width(16)
+
+	countStyle := lipgloss.NewStyle().
+		Bold(true).
+		Align(lipgloss.Right).
+		Width(6)
+
+	// Build header
+	header := headerStyle.Render(fmt.Sprintf("%s Tool Usage (%d)", icon, total))
+
+	// Build rows for each category
+	var rows []string
+
+	if appTotal > 0 {
+		row := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			labelStyle.Render("  📦 App"),
+			countStyle.Copy().Foreground(appColor).Render(fmt.Sprintf("%d", appTotal)),
+		)
+		rows = append(rows, row)
+	}
+
+	if mcpTotal > 0 && cfg.Tools.ShowMCP {
+		row := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			labelStyle.Render("  🔌 MCP"),
+			countStyle.Copy().Foreground(mcpColor).Render(fmt.Sprintf("%d", mcpTotal)),
+		)
+		rows = append(rows, row)
+	}
+
+	if skillsTotal > 0 && cfg.Tools.ShowSkills {
+		row := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			labelStyle.Render("  ⚡ Skills"),
+			countStyle.Copy().Foreground(skillsColor).Render(fmt.Sprintf("%d", skillsTotal)),
+		)
+		rows = append(rows, row)
+	}
+
+	if customTotal > 0 {
+		row := lipgloss.JoinHorizontal(
+			lipgloss.Top,
+			labelStyle.Render("  🎨 Custom"),
+			countStyle.Copy().Foreground(customColor).Render(fmt.Sprintf("%d", customTotal)),
+		)
+		rows = append(rows, row)
+	}
+
+	// If no categories to show, just show total
+	if len(rows) == 0 {
+		return toolsMainStyle.Render(fmt.Sprintf("%s %d", icon, total)), nil
+	}
+
+	// Combine header and rows
+	var contentParts []string
+	contentParts = append(contentParts, header)
+	contentParts = append(contentParts, rows...)
+
+	content := lipgloss.JoinVertical(lipgloss.Left, contentParts...)
+
+	// Create bordered box
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(borderColor).
+		Padding(0, 1)
+
+	return boxStyle.Render(content), nil
 }
