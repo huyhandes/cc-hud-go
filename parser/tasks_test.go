@@ -384,7 +384,7 @@ func TestParseTranscriptWithMixedOperations(t *testing.T) {
 				}]
 			}
 		}`,
-		// 3. Update task 2 to in_progress (by index)
+		// 3. Update task 2 to in_progress (by 1-based task ID)
 		`{
 			"type": "assistant",
 			"message": {
@@ -392,7 +392,7 @@ func TestParseTranscriptWithMixedOperations(t *testing.T) {
 					"type": "tool_use",
 					"name": "TaskUpdate",
 					"input": {
-						"taskId": 1,
+						"taskId": 2,
 						"status": "in_progress"
 					}
 				}]
@@ -414,5 +414,101 @@ func TestParseTranscriptWithMixedOperations(t *testing.T) {
 	}
 	if s.Tasks.Pending != 1 {
 		t.Errorf("Expected 1 pending task, got %d", s.Tasks.Pending)
+	}
+}
+
+func TestParseTaskUpdate1BasedTaskID(t *testing.T) {
+	// Test the fix for 1-based task ID indexing bug
+	// Previously: TaskUpdate with taskId="1" would update index 1 (task 2)
+	// After fix: TaskUpdate with taskId="1" should update index 0 (task 1)
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
+	// Create 3 tasks (indices 0, 1, 2)
+	for i := 1; i <= 3; i++ {
+		createLine := `{
+			"type": "assistant",
+			"message": {
+				"content": [{
+					"type": "tool_use",
+					"name": "TaskCreate",
+					"input": {
+						"subject": "Task ` + string(rune('0'+i)) + `"
+					}
+				}]
+			}
+		}`
+		_ = ParseTranscriptLineWithTracker([]byte(createLine), s, tracker)
+	}
+	updateStateFromTasks(tracker, s)
+
+	// Verify all 3 tasks are pending
+	if s.Tasks.Pending != 3 {
+		t.Fatalf("Setup failed: expected 3 pending tasks, got %d", s.Tasks.Pending)
+	}
+
+	// Update task with taskId="1" (should update first task at index 0)
+	updateLine := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TaskUpdate",
+				"input": {
+					"taskId": "1",
+					"status": "completed"
+				}
+			}]
+		}
+	}`
+	_ = ParseTranscriptLineWithTracker([]byte(updateLine), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	// Verify task at index 0 (task 1) was completed
+	if s.Tasks.Completed != 1 {
+		t.Errorf("Expected 1 completed task, got %d", s.Tasks.Completed)
+	}
+	if s.Tasks.Pending != 2 {
+		t.Errorf("Expected 2 pending tasks, got %d", s.Tasks.Pending)
+	}
+	if len(s.Tasks.Details) != 3 {
+		t.Fatalf("Expected 3 total tasks, got %d", len(s.Tasks.Details))
+	}
+	if s.Tasks.Details[0].Status != "completed" {
+		t.Errorf("Expected first task (index 0) to be completed, got %s", s.Tasks.Details[0].Status)
+	}
+	if s.Tasks.Details[1].Status != "pending" {
+		t.Errorf("Expected second task (index 1) to be pending, got %s", s.Tasks.Details[1].Status)
+	}
+
+	// Update task with taskId="3" (should update third task at index 2)
+	updateLine3 := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TaskUpdate",
+				"input": {
+					"taskId": "3",
+					"status": "completed"
+				}
+			}]
+		}
+	}`
+	_ = ParseTranscriptLineWithTracker([]byte(updateLine3), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	// Verify task at index 2 (task 3) was completed
+	if s.Tasks.Completed != 2 {
+		t.Errorf("Expected 2 completed tasks, got %d", s.Tasks.Completed)
+	}
+	if s.Tasks.Pending != 1 {
+		t.Errorf("Expected 1 pending task, got %d", s.Tasks.Pending)
+	}
+	if s.Tasks.Details[2].Status != "completed" {
+		t.Errorf("Expected third task (index 2) to be completed, got %s", s.Tasks.Details[2].Status)
 	}
 }

@@ -302,8 +302,17 @@ func processTaskTool(block ContentBlock, tracker *TaskTracker) {
 		index := -1
 		if idx, ok := tracker.TaskIDMap[taskID]; ok {
 			index = idx
-		} else if idxNum, err := strconv.Atoi(taskID); err == nil && idxNum >= 0 && idxNum < len(tracker.Tasks) {
-			index = idxNum
+		} else if idxNum, err := strconv.Atoi(taskID); err == nil {
+			// Support both 0-based (backward compat) and 1-based (Claude Code standard) indexing
+			// Claude Code uses 1-based task IDs ("1", "2", "3")
+			// For backward compatibility, also support taskId=0 as direct index 0
+			if idxNum == 0 && idxNum < len(tracker.Tasks) {
+				// taskId=0: treat as 0-based index 0
+				index = 0
+			} else if idxNum >= 1 && idxNum <= len(tracker.Tasks) {
+				// taskId >= 1: treat as 1-based task ID, convert to 0-based array index
+				index = idxNum - 1
+			}
 		}
 
 		if index < 0 || index >= len(tracker.Tasks) {
@@ -427,7 +436,15 @@ func ParseTranscriptLineWithTracker(data []byte, s *state.State, tracker *TaskTr
 						s.Tools.MCPTools[server][toolName]++
 					}
 				case CategorySkill:
-					s.Tools.AppTools["Skill"]++
+					// Extract skill name from input parameters
+					if skillName, ok := block.Input["skill"].(string); ok && skillName != "" {
+						usage := s.Tools.Skills[skillName]
+						usage.Count++
+						s.Tools.Skills[skillName] = usage
+					} else {
+						// Fallback for skills without name
+						s.Tools.AppTools["Skill"]++
+					}
 				}
 			}
 		}
