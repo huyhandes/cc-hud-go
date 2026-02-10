@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:*)",
+      "Bash(docker compose:*)",
+      "Bash(go test:*)",
+      "Bash(go fmt:*)",
+      "Bash(go vet:*)"
+    ],
+    "deny": [],
+    "ask": ["Skill(*)"]
+  },
+  "enableAllProjectMcpServers": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-context.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/format-code.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/smart-go-validate.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  },
+  "outputStyle": "Senior Engineer Mode (Level 3)"
+}
