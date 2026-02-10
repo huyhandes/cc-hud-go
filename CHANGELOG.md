@@ -67,8 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Release Links
 
-- [0.2.0] - https://github.com/huybui/cc-hud-go/releases/tag/v0.2.0
-- [0.1.0] - https://github.com/huybui/cc-hud-go/releases/tag/v0.1.0
+- [0.2.0] - https://github.com/huyhandes/cc-hud-go/releases/tag/v0.2.0
+- [0.1.0] - https://github.com/huyhandes/cc-hud-go/releases/tag/v0.1.0
 
 ## Upgrade Notes
 
@@ -99,6 +99,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and th
 
 ## Support
 
-- **Documentation**: https://github.com/huybui/cc-hud-go
-- **Issues**: https://github.com/huybui/cc-hud-go/issues
-- **Discussions**: https://github.com/huybui/cc-hud-go/discussions
+- **Documentation**: https://github.com/huyhandes/cc-hud-go
+- **Issues**: https://github.com/huyhandes/cc-hud-go/issues
+- **Discussions**: https://github.com/huyhandes/cc-hud-go/discussions

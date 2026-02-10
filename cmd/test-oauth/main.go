@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/huybui/cc-hud-go/internal/oauth"
+	"github.com/huyhandes/cc-hud-go/internal/oauth"
 )
 
 func main() {

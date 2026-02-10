@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Version is set at build time via -ldflags "-X github.com/huybui/cc-hud-go/version.Version=x.y.z"
+// Version is set at build time via -ldflags "-X github.com/huyhandes/cc-hud-go/version.Version=x.y.z"
 var Version = ""
 
 // Get returns the version string

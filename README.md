@@ -73,14 +73,14 @@ Available builds:
 git clone git@github.com:huyhandes/cc-hud-go.git
 cd cc-hud-go
 
-# Build with version info (using Make - recommended)
-make build
+# Build with version info (using Just - recommended)
+just build
 
 # Or build manually
 go build -o cc-hud-go .
 
-# Install to GOPATH/bin (optional)
-make install
+# Install to ~/.local/bin (optional)
+just install
 # Or move to PATH manually
 sudo mv cc-hud-go /usr/local/bin/
 ```
@@ -497,31 +497,31 @@ cd cc-hud-go
 go mod download
 
 # Run tests
-make test
+just test
 
 # Build with version info
-make build
+just build
 
 # Or build manually
 go build -o cc-hud-go .
 ```
 
-### Make Commands
+### Just Commands
 
-The project includes a Makefile for common development tasks:
+The project includes a justfile for common development tasks:
 
 ```bash
-make help            # Show all available commands
-make build           # Build with version from git tags
-make test            # Run all tests
-make test-coverage   # Run tests with coverage
-make check           # Run fmt, vet, and test
-make fmt             # Format code
-make vet             # Run go vet
-make lint            # Run golangci-lint
-make clean           # Remove build artifacts
-make install         # Install to GOPATH/bin
-make build-all       # Build for all platforms
+just                 # Show all available commands
+just build           # Build with version from git tags
+just test            # Run all tests
+just test-coverage   # Run tests with coverage
+just check           # Run fmt, vet, and test
+just fmt             # Format code
+just vet             # Run go vet
+just lint            # Run golangci-lint
+just clean           # Remove build artifacts
+just install         # Install to ~/.local/bin
+just build-all       # Build for all platforms
 ```
 
 ### Creating a Release

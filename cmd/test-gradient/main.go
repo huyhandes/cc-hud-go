@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/huybui/cc-hud-go/config"
-	"github.com/huybui/cc-hud-go/style"
-	"github.com/huybui/cc-hud-go/theme"
+	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/style"
+	"github.com/huyhandes/cc-hud-go/theme"
 )
 
 func main() {

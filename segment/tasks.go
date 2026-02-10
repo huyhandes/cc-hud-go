@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/huybui/cc-hud-go/config"
-	"github.com/huybui/cc-hud-go/state"
-	"github.com/huybui/cc-hud-go/style"
+	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/state"
+	"github.com/huyhandes/cc-hud-go/style"
 )
 
 type TasksSegment struct{}

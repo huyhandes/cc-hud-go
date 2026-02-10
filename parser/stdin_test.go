@@ -3,7 +3,7 @@ package parser
 import (
 	"testing"
 
-	"github.com/huybui/cc-hud-go/state"
+	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestParseStdin(t *testing.T) {

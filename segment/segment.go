@@ -1,8 +1,8 @@
 package segment
 
 import (
-	"github.com/huybui/cc-hud-go/config"
-	"github.com/huybui/cc-hud-go/state"
+	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/state"
 )
 
 // Segment represents a displayable statusline segment

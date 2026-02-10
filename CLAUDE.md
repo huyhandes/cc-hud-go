@@ -14,28 +14,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-**Using Make (Recommended):**
+**Using Just (Recommended):**
 ```bash
 # Show all available commands
-make help
+just
 
 # Build with version info from git tags
-make build
+just build
 
 # Run tests
-make test
+just test
 
 # Run tests with coverage
-make test-coverage
+just test-coverage
 
 # Format, vet, and test
-make check
+just check
 
 # Clean build artifacts
-make clean
+just clean
 
-# Build and install to GOPATH/bin
-make install
+# Build and install to ~/.local/bin
+just install
 ```
 
 **Manual Build:**
@@ -44,7 +44,7 @@ make install
 go build -o cc-hud-go .
 
 # Build with specific version
-go build -ldflags "-X github.com/huybui/cc-hud-go/version.Version=v1.0.0" -o cc-hud-go .
+go build -ldflags "-X github.com/huyhandes/cc-hud-go/version.Version=v1.0.0" -o cc-hud-go .
 ```
 
 **Run:**
@@ -63,11 +63,11 @@ go run . -v
 
 **Tests:**
 ```bash
-# Run all tests (using make)
-make test
+# Run all tests (using just)
+just test
 
 # Run tests with coverage
-make test-coverage
+just test-coverage
 
 # Using go directly
 go test ./...
@@ -83,16 +83,16 @@ go test -v ./...
 **Linting:**
 ```bash
 # Format code
-make fmt
+just fmt
 
 # Run go vet
-make vet
+just vet
 
 # Run golangci-lint (if installed)
-make lint
+just lint
 
 # Run all checks (format, vet, test)
-make check
+just check
 
 # Manual commands
 go fmt ./...
@@ -162,7 +162,7 @@ cc-hud-go/
 ├── main.go          # Application entry point
 ├── main_test.go     # Main package tests
 ├── integration_test.go  # Integration tests
-├── Makefile         # Build and development commands
+├── justfile         # Build and development commands
 └── go.mod
 ```
 

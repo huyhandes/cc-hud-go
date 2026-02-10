@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/huybui/cc-hud-go/state"
+	"github.com/huyhandes/cc-hud-go/state"
 )
 
 type ToolCategory int

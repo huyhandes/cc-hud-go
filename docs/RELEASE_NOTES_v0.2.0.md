@@ -68,13 +68,13 @@
 
 ```bash
 # Build from source
-git clone https://github.com/huybui/cc-hud-go.git
+git clone https://github.com/huyhandes/cc-hud-go.git
 cd cc-hud-go
 make build
 make install
 
 # Or download release binary
-curl -L https://github.com/huybui/cc-hud-go/releases/download/v0.2.0/cc-hud-go -o ~/.local/bin/cc-hud-go
+curl -L https://github.com/huyhandes/cc-hud-go/releases/download/v0.2.0/cc-hud-go -o ~/.local/bin/cc-hud-go
 chmod +x ~/.local/bin/cc-hud-go
 ```
 
@@ -119,7 +119,7 @@ Your existing config will continue to work. To take advantage of new themes:
 
 ## 🐛 Known Issues
 
-None at this time. Report issues at: https://github.com/huybui/cc-hud-go/issues
+None at this time. Report issues at: https://github.com/huyhandes/cc-hud-go/issues
 
 ## 🚀 What's Next
 
@@ -132,4 +132,4 @@ Future roadmap for v0.3.0:
 
 ---
 
-**Full Changelog:** https://github.com/huybui/cc-hud-go/compare/v0.1.0...v0.2.0
+**Full Changelog:** https://github.com/huyhandes/cc-hud-go/compare/v0.1.0...v0.2.0

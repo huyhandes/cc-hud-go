@@ -6,8 +6,8 @@
 
 ## Build Verification
 
-✅ Binary built successfully with `make build`  
-✅ Version flag works: `v0.1.0-22-gdb0ea4d`  
+✅ Binary built successfully with `just build`
+✅ Version flag works: `v0.1.0-22-gdb0ea4d`
 ✅ Help flag displays comprehensive usage information
 
 ## Visual Enhancements Verified

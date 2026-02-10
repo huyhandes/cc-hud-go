@@ -1768,14 +1768,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/huybui/cc-hud-go/config"
-	"github.com/huybui/cc-hud-go/output"
-	"github.com/huybui/cc-hud-go/parser"
-	"github.com/huybui/cc-hud-go/segment"
-	"github.com/huybui/cc-hud-go/state"
-	"github.com/huybui/cc-hud-go/style"
-	"github.com/huybui/cc-hud-go/theme"
-	"github.com/huybui/cc-hud-go/version"
+	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/output"
+	"github.com/huyhandes/cc-hud-go/parser"
+	"github.com/huyhandes/cc-hud-go/segment"
+	"github.com/huyhandes/cc-hud-go/state"
+	"github.com/huyhandes/cc-hud-go/style"
+	"github.com/huyhandes/cc-hud-go/theme"
+	"github.com/huyhandes/cc-hud-go/version"
 )
 
 func main() {
