@@ -9,34 +9,33 @@ import (
 	"github.com/muesli/termenv"
 )
 
+// Theme interface for color access
+type Theme interface {
+	Name() string
+	GetColor(semantic string) lipgloss.Color
+}
+
 var (
 	// Global renderer that forces color output
 	renderer *lipgloss.Renderer
 
-	// Color palette - organized by semantic meaning
+	// Current theme
+	currentTheme Theme
 
-	// Status colors (usage levels)
-	ColorSuccess = lipgloss.Color("#10B981") // Green - healthy/good
-	ColorWarning = lipgloss.Color("#F59E0B") // Orange - caution
-	ColorDanger  = lipgloss.Color("#EF4444") // Red - critical
-
-	// Flow colors (data movement)
-	ColorInput  = lipgloss.Color("#3B82F6") // Blue - incoming data
-	ColorOutput = lipgloss.Color("#10B981") // Emerald - outgoing data
-
-	// Cache colors (storage layer)
-	ColorCacheRead  = lipgloss.Color("#8B5CF6") // Purple - cache read
-	ColorCacheWrite = lipgloss.Color("#EC4899") // Pink - cache write
-
-	// Primary UI colors
-	ColorPrimary   = lipgloss.Color("#7C3AED") // Purple - model/agent
-	ColorHighlight = lipgloss.Color("#06B6D4") // Cyan - git/highlights
-	ColorAccent    = lipgloss.Color("#F59E0B") // Orange - cost/emphasis
-
-	// Utility colors
-	ColorMuted  = lipgloss.Color("#6B7280") // Gray - separators/static
-	ColorBright = lipgloss.Color("#F3F4F6") // Light gray
-	ColorInfo   = lipgloss.Color("#14B8A6") // Teal - information
+	// Color palette - loaded from theme
+	ColorSuccess    lipgloss.Color
+	ColorWarning    lipgloss.Color
+	ColorDanger     lipgloss.Color
+	ColorInput      lipgloss.Color
+	ColorOutput     lipgloss.Color
+	ColorCacheRead  lipgloss.Color
+	ColorCacheWrite lipgloss.Color
+	ColorPrimary    lipgloss.Color
+	ColorHighlight  lipgloss.Color
+	ColorAccent     lipgloss.Color
+	ColorMuted      lipgloss.Color
+	ColorBright     lipgloss.Color
+	ColorInfo       lipgloss.Color
 
 	// Pre-configured styles
 	ModelStyle     lipgloss.Style
@@ -57,8 +56,28 @@ func init() {
 	// Create renderer that forces color output with TrueColor profile
 	renderer = lipgloss.NewRenderer(os.Stdout, termenv.WithProfile(termenv.TrueColor))
 	renderer.SetColorProfile(termenv.TrueColor)
+}
 
-	// Initialize styles with renderer
+// Init initializes styles with the given theme
+func Init(theme Theme) {
+	currentTheme = theme
+
+	// Load colors from theme
+	ColorSuccess = theme.GetColor("success")
+	ColorWarning = theme.GetColor("warning")
+	ColorDanger = theme.GetColor("danger")
+	ColorInput = theme.GetColor("input")
+	ColorOutput = theme.GetColor("output")
+	ColorCacheRead = theme.GetColor("cacheRead")
+	ColorCacheWrite = theme.GetColor("cacheWrite")
+	ColorPrimary = theme.GetColor("primary")
+	ColorHighlight = theme.GetColor("highlight")
+	ColorAccent = theme.GetColor("accent")
+	ColorMuted = theme.GetColor("muted")
+	ColorBright = theme.GetColor("bright")
+	ColorInfo = theme.GetColor("info")
+
+	// Initialize styles with theme colors
 	ModelStyle = renderer.NewStyle().
 		Foreground(ColorPrimary).
 		Bold(true)
@@ -70,7 +89,7 @@ func init() {
 		Foreground(ColorHighlight)
 
 	CostStyle = renderer.NewStyle().
-		Foreground(ColorWarning)
+		Foreground(ColorAccent)
 
 	ToolsStyle = renderer.NewStyle().
 		Foreground(ColorSuccess)

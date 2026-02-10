@@ -3,6 +3,8 @@ package style
 import (
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 func TestRenderGradientBar(t *testing.T) {
@@ -61,4 +63,26 @@ func stripAnsi(s string) string {
 		}
 	}
 	return result
+}
+
+// Mock theme for testing
+type mockTheme struct{}
+
+func (m *mockTheme) Name() string { return "test" }
+func (m *mockTheme) GetColor(semantic string) lipgloss.Color {
+	return lipgloss.Color("#ff0000")
+}
+
+func TestInitWithTheme(t *testing.T) {
+	theme := &mockTheme{}
+	Init(theme)
+
+	// Verify colors are set from theme
+	if ColorSuccess == lipgloss.Color("") {
+		t.Error("Expected ColorSuccess to be initialized from theme")
+	}
+
+	if string(ColorSuccess) != "#ff0000" {
+		t.Errorf("Expected ColorSuccess #ff0000, got %s", ColorSuccess)
+	}
 }
