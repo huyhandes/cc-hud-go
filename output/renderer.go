@@ -7,6 +7,7 @@ import (
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/segment"
 	"github.com/huybui/cc-hud-go/state"
+	"github.com/huybui/cc-hud-go/style"
 )
 
 // Render generates plain text output for the statusline
@@ -71,7 +72,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line1))
 	}
 
-	// Line 2: Input/Output tokens | Cost
+	// Line 2: Input/Output tokens | Cost (without file changes)
 	line2 := []string{}
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line2 = append(line2, renderTokenDetails(s))
@@ -88,7 +89,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line2))
 	}
 
-	// Line 3: Git | (file edits are part of git)
+	// Line 3: Git | File changes
 	line3 := []string{}
 	for _, seg := range segment.All() {
 		id := seg.ID()
@@ -99,23 +100,23 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 			}
 		}
 	}
+	// Add file changes to git line
+	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
+		line3 = append(line3, renderFileChanges(s))
+	}
 	if len(line3) > 0 {
 		lines = append(lines, joinSegments(line3))
 	}
 
-	// Line 4: Tools | Tasks | Agent | RateLimit
-	line4 := []string{}
+	// Line 4+: Each tool/task segment on its own line
 	for _, seg := range segment.All() {
 		id := seg.ID()
 		if (id == "tools" || id == "tasks" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
 			text, _ := seg.Render(s, cfg)
 			if text != "" {
-				line4 = append(line4, text)
+				lines = append(lines, text)
 			}
 		}
-	}
-	if len(line4) > 0 {
-		lines = append(lines, joinSegments(line4))
 	}
 
 	return strings.Join(lines, "\n"), nil
@@ -132,7 +133,7 @@ func renderContextBar(s *state.State) string {
 	return fmt.Sprintf("%s %s", bar, colorize(percentageText, color))
 }
 
-// renderTokenDetails renders token breakdown
+// renderTokenDetails renders token breakdown with colors
 func renderTokenDetails(s *state.State) string {
 	formatTokens := func(tokens int) string {
 		if tokens >= 1000 {
@@ -142,18 +143,46 @@ func renderTokenDetails(s *state.State) string {
 	}
 
 	details := []string{}
-	details = append(details, fmt.Sprintf("📥 %s", formatTokens(s.Context.TotalInputTokens)))
-	details = append(details, fmt.Sprintf("📤 %s", formatTokens(s.Context.TotalOutputTokens)))
 
+	// Input tokens - Blue
+	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
+	details = append(details, fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))))
+
+	// Output tokens - Emerald/Green
+	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
+	details = append(details, fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))))
+
+	// Cache stats if available
 	if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
-		details = append(details, fmt.Sprintf("💾 R:%s/W:%s",
-			formatTokens(s.Context.CacheReadTokens),
-			formatTokens(s.Context.CacheCreateTokens)))
+		cacheReadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheRead)
+		cacheWriteStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheWrite)
+		details = append(details, fmt.Sprintf("💾 %s%s%s",
+			cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
+			style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+			cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens))))
 	}
 
-	details = append(details, fmt.Sprintf("⚡ %s", formatTokens(s.Context.TotalTokens)))
+	// Total context size - Muted gray
+	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
+	details = append(details, fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))))
 
 	return strings.Join(details, " ")
+}
+
+// renderFileChanges renders file changes (lines added/removed)
+func renderFileChanges(s *state.State) string {
+	if s.Cost.LinesAdded == 0 && s.Cost.LinesRemoved == 0 {
+		return ""
+	}
+
+	addStyle := style.GetRenderer().NewStyle().Foreground(style.ColorSuccess)
+	removeStyle := style.GetRenderer().NewStyle().Foreground(style.ColorDanger)
+
+	return fmt.Sprintf("📝 %s%s%s",
+		addStyle.Render(fmt.Sprintf("+%d", s.Cost.LinesAdded)),
+		style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
+		removeStyle.Render(fmt.Sprintf("-%d", s.Cost.LinesRemoved)),
+	)
 }
 
 // Helper functions for gradient bar rendering
