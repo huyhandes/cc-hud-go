@@ -24,3 +24,27 @@ func TestInvalidTheme(t *testing.T) {
 		t.Error("Expected fallback theme, got nil")
 	}
 }
+
+func TestMacchiatoColors(t *testing.T) {
+	theme := NewMacchiato()
+
+	tests := []struct {
+		semantic string
+		expected string
+	}{
+		{"success", "#a6da95"},
+		{"warning", "#eed49f"},
+		{"danger", "#ed8796"},
+		{"input", "#8aadf4"},
+		{"output", "#8bd5ca"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.semantic, func(t *testing.T) {
+			color := theme.GetColor(tt.semantic)
+			if string(color) != tt.expected {
+				t.Errorf("GetColor(%s) = %s, want %s", tt.semantic, color, tt.expected)
+			}
+		})
+	}
+}
