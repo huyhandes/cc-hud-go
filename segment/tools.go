@@ -92,11 +92,11 @@ func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string,
 	}
 
 	borderColor := lipgloss.Color("240")
-	headerColor := lipgloss.Color("14")      // Cyan
-	appColor := lipgloss.Color("12")         // Blue
-	mcpColor := lipgloss.Color("13")         // Magenta
-	skillsColor := lipgloss.Color("11")      // Yellow
-	customColor := lipgloss.Color("10")      // Green
+	headerColor := lipgloss.Color("14") // Cyan
+	appColor := lipgloss.Color("12")    // Blue
+	mcpColor := lipgloss.Color("13")    // Magenta
+	skillsColor := lipgloss.Color("11") // Yellow
+	customColor := lipgloss.Color("10") // Green
 
 	// Styles
 	headerStyle := lipgloss.NewStyle().
@@ -123,7 +123,7 @@ func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string,
 		row := lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			labelStyle.Render("  📦 App"),
-			countStyle.Copy().Foreground(appColor).Render(fmt.Sprintf("%d", appTotal)),
+			countStyle.Foreground(appColor).Render(fmt.Sprintf("%d", appTotal)),
 		)
 		rows = append(rows, row)
 	}
@@ -132,7 +132,7 @@ func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string,
 		row := lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			labelStyle.Render("  🔌 MCP"),
-			countStyle.Copy().Foreground(mcpColor).Render(fmt.Sprintf("%d", mcpTotal)),
+			countStyle.Foreground(mcpColor).Render(fmt.Sprintf("%d", mcpTotal)),
 		)
 		rows = append(rows, row)
 	}
@@ -141,7 +141,7 @@ func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string,
 		row := lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			labelStyle.Render("  ⚡ Skills"),
-			countStyle.Copy().Foreground(skillsColor).Render(fmt.Sprintf("%d", skillsTotal)),
+			countStyle.Foreground(skillsColor).Render(fmt.Sprintf("%d", skillsTotal)),
 		)
 		rows = append(rows, row)
 	}
@@ -150,7 +150,7 @@ func (t *ToolsSegment) renderInline(s *state.State, cfg *config.Config) (string,
 		row := lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			labelStyle.Render("  🎨 Custom"),
-			countStyle.Copy().Foreground(customColor).Render(fmt.Sprintf("%d", customTotal)),
+			countStyle.Foreground(customColor).Render(fmt.Sprintf("%d", customTotal)),
 		)
 		rows = append(rows, row)
 	}

@@ -82,9 +82,9 @@ func TestContextSegmentUsesGradientBar(t *testing.T) {
 
 	// Should contain gradient characters
 	hasGradient := strings.Contains(result, "█") ||
-	               strings.Contains(result, "▓") ||
-	               strings.Contains(result, "▒") ||
-	               strings.Contains(result, "░")
+		strings.Contains(result, "▓") ||
+		strings.Contains(result, "▒") ||
+		strings.Contains(result, "░")
 
 	if !hasGradient {
 		t.Error("Expected gradient bar characters (█▓▒░)")

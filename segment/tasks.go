@@ -42,11 +42,11 @@ func (t *TasksSegment) Render(s *state.State, cfg *config.Config) (string, error
 func (t *TasksSegment) renderInline(s *state.State, cfg *config.Config) (string, error) {
 
 	// Define colors
-	borderColor := lipgloss.Color("240")     // Gray border
-	headerColor := lipgloss.Color("14")      // Cyan
-	pendingColor := lipgloss.Color("11")     // Yellow
-	progressColor := lipgloss.Color("12")    // Blue
-	completedColor := lipgloss.Color("10")   // Green
+	borderColor := lipgloss.Color("240")   // Gray border
+	headerColor := lipgloss.Color("14")    // Cyan
+	pendingColor := lipgloss.Color("11")   // Yellow
+	progressColor := lipgloss.Color("12")  // Blue
+	completedColor := lipgloss.Color("10") // Green
 
 	// Create styles for each component
 	headerStyle := lipgloss.NewStyle().

@@ -19,9 +19,6 @@ var (
 	// Global renderer that forces color output
 	renderer *lipgloss.Renderer
 
-	// Current theme
-	currentTheme Theme
-
 	// Color palette - loaded from theme
 	ColorSuccess    lipgloss.Color
 	ColorWarning    lipgloss.Color
@@ -60,8 +57,6 @@ func init() {
 
 // Init initializes styles with the given theme
 func Init(theme Theme) {
-	currentTheme = theme
-
 	// Load colors from theme
 	ColorSuccess = theme.GetColor("success")
 	ColorWarning = theme.GetColor("warning")

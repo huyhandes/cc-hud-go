@@ -224,10 +224,10 @@ func TestParseTaskUpdateByIndex(t *testing.T) {
 
 func TestParseTaskStatusNormalization(t *testing.T) {
 	tests := []struct {
-		name           string
-		inputStatus    string
-		expectedField  string
-		expectedCount  int
+		name          string
+		inputStatus   string
+		expectedField string
+		expectedCount int
 	}{
 		{"completed", "completed", "Completed", 1},
 		{"complete", "complete", "Completed", 1},

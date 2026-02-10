@@ -32,8 +32,8 @@ func TestRenderGradientBar(t *testing.T) {
 
 			// Count filled characters (█▓▒)
 			filled := strings.Count(stripped, "█") +
-			          strings.Count(stripped, "▓") +
-			          strings.Count(stripped, "▒")
+				strings.Count(stripped, "▓") +
+				strings.Count(stripped, "▒")
 			empty := strings.Count(stripped, "░")
 
 			if filled < tt.wantFilled-1 || filled > tt.wantFilled+1 {

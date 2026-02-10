@@ -195,7 +195,6 @@ func renderFileChanges(s *state.State) string {
 	)
 }
 
-
 // joinSegments joins segment outputs with two-space separators
 func joinSegments(segments []string) string {
 	// Filter out empty segments

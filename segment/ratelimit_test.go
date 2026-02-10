@@ -78,9 +78,9 @@ func TestRateLimitUsesGradientBar(t *testing.T) {
 
 	// Should contain gradient bar characters
 	hasGradient := strings.Contains(result, "█") ||
-	               strings.Contains(result, "▓") ||
-	               strings.Contains(result, "▒") ||
-	               strings.Contains(result, "░")
+		strings.Contains(result, "▓") ||
+		strings.Contains(result, "▒") ||
+		strings.Contains(result, "░")
 
 	if !hasGradient {
 		t.Error("Expected gradient bar characters in rate limit segment")
