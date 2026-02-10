@@ -55,10 +55,11 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 		return "", nil
 	}
 
+	// Join with separator for better visual separation
 	result := ""
 	for i, part := range parts {
 		if i > 0 {
-			result += " "
+			result += "  │  "
 		}
 		result += part
 	}
