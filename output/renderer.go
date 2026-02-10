@@ -48,79 +48,36 @@ func renderSingleLine(s *state.State, cfg *config.Config) (string, error) {
 }
 
 func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
-	// Line 1: Model and Context (most important)
-	line1Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "model" || id == "context") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line1Parts = append(line1Parts, text)
-			}
-		}
-	}
-
-	// Line 2: Git, Cost, and operational metrics
-	line2Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "git" || id == "cost") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line2Parts = append(line2Parts, text)
-			}
-		}
-	}
-
-	// Line 3: Tools, Agent, and other info (excluding tasks)
-	line3Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "tools" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line3Parts = append(line3Parts, text)
-			}
-		}
-	}
-
-	// Line 4: Tasks (dedicated line for dashboard display)
-	line4Parts := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if id == "tasks" && seg.Enabled(cfg) {
-			text, err := seg.Render(s, cfg)
-			if err != nil {
-				return "", err
-			}
-			if text != "" {
-				line4Parts = append(line4Parts, text)
-			}
-		}
-	}
-
-	// Build output
 	var lines []string
-	if len(line1Parts) > 0 {
-		lines = append(lines, joinSegments(line1Parts))
+
+	// Render each segment type on its own line for better readability
+	for _, seg := range segment.All() {
+		if !seg.Enabled(cfg) {
+			continue
+		}
+
+		text, err := seg.Render(s, cfg)
+		if err != nil {
+			return "", err
+		}
+
+		if text == "" {
+			continue
+		}
+
+		// Add the segment output
+		lines = append(lines, text)
+
+		// Add blank line after major sections for visual grouping
+		id := seg.ID()
+		if id == "context" || id == "cost" || id == "tasks" {
+			lines = append(lines, "")
+		}
 	}
-	if len(line2Parts) > 0 {
-		lines = append(lines, joinSegments(line2Parts))
-	}
-	if len(line3Parts) > 0 {
-		lines = append(lines, joinSegments(line3Parts))
-	}
-	if len(line4Parts) > 0 {
-		lines = append(lines, joinSegments(line4Parts))
+
+	// Remove trailing blank lines
+	for len(lines) > 0 && strings.TrimSpace(lines[len(lines)-1]) == "" {
+		lines = lines[:len(lines)-1]
 	}
 
 	return strings.Join(lines, "\n"), nil

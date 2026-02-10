@@ -46,10 +46,6 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 	}
 
 	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
-	mainDisplay := fmt.Sprintf("%s %s",
-		bar,
-		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
-	)
 
 	// Detailed token breakdown with semantic colors
 	details := []string{}
@@ -86,5 +82,10 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),
 	)
 
-	return fmt.Sprintf("%s %s", mainDisplay, strings.Join(details, " ")), nil
+	// Multi-line format: bar on first line, details on second line
+	return fmt.Sprintf("%s %s\n  %s",
+		bar,
+		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
+		strings.Join(details, "  "),
+	), nil
 }
