@@ -30,8 +30,8 @@
     "showMCP": true
   },
   "tables": {
-    "toolsTableThreshold": 5,
-    "tasksTableThreshold": 3,
+    "toolsTableThreshold": 999,
+    "tasksTableThreshold": 999,
     "contextTableThreshold": 999
   }
 }
