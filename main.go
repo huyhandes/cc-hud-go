@@ -9,6 +9,7 @@ import (
 
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/internal/git"
+	"github.com/huybui/cc-hud-go/internal/oauth"
 	"github.com/huybui/cc-hud-go/output"
 	"github.com/huybui/cc-hud-go/parser"
 	"github.com/huybui/cc-hud-go/state"
@@ -148,6 +149,17 @@ func main() {
 		s.Git.Added = status.Added
 		s.Git.Modified = status.Modified
 		s.Git.Deleted = status.Deleted
+	}
+
+	// Fetch rate limit usage from OAuth API (if enabled)
+	if cfg.Display.FetchOAuth {
+		if usage, err := oauth.FetchUsage(); err == nil {
+			s.RateLimits.FiveHourPercent = usage.FiveHour.Utilization
+			s.RateLimits.SevenDayPercent = usage.SevenDay.Utilization
+			s.RateLimits.FiveHourResetsAt = usage.FiveHour.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
+			s.RateLimits.SevenDayResetsAt = usage.SevenDay.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
+		}
+		// Silently fail if OAuth fetch fails - we'll use stdin data as fallback
 	}
 
 	// Render and output statusline

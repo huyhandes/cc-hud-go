@@ -32,10 +32,14 @@ type ContextInfo struct {
 }
 
 type RateLimitInfo struct {
-	HourlyUsed    int
-	HourlyTotal   int
-	SevenDayUsed  int
-	SevenDayTotal int
+	HourlyUsed       int
+	HourlyTotal      int
+	SevenDayUsed     int
+	SevenDayTotal    int
+	FiveHourPercent  float64 // From OAuth API
+	SevenDayPercent  float64 // From OAuth API
+	FiveHourResetsAt string  // ISO 8601 timestamp
+	SevenDayResetsAt string  // ISO 8601 timestamp
 }
 
 type GitInfo struct {

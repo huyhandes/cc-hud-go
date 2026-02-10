@@ -77,6 +77,12 @@ type StdinData struct {
 	Agent *struct {
 		Name string `json:"name"`
 	} `json:"agent,omitempty"`
+	RateLimits *struct {
+		HourlyUsed    int `json:"hourly_used"`
+		HourlyTotal   int `json:"hourly_total"`
+		SevenDayUsed  int `json:"seven_day_used"`
+		SevenDayTotal int `json:"seven_day_total"`
+	} `json:"rate_limits,omitempty"`
 }
 
 // ParseStdin parses stdin JSON from Claude Code and updates state
@@ -130,8 +136,13 @@ func ParseStdin(data []byte, s *state.State) error {
 		s.Cost.LinesRemoved = stdin.Cost.TotalLinesRemoved
 	}
 
-	// Update rate limits - not provided in API, keep existing values
-	// Rate limits data is not in the Claude Code API
+	// Update rate limits if present
+	if stdin.RateLimits != nil {
+		s.RateLimits.HourlyUsed = stdin.RateLimits.HourlyUsed
+		s.RateLimits.HourlyTotal = stdin.RateLimits.HourlyTotal
+		s.RateLimits.SevenDayUsed = stdin.RateLimits.SevenDayUsed
+		s.RateLimits.SevenDayTotal = stdin.RateLimits.SevenDayTotal
+	}
 
 	return nil
 }

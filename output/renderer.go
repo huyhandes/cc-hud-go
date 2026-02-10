@@ -53,7 +53,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	// Custom 4-line layout as requested
 	var lines []string
 
-	// Line 1: Model | Context | Token
+	// Line 1: Model | Context | 5h Limit | 7d Limit
 	line1 := []string{}
 	for _, seg := range segment.All() {
 		id := seg.ID()
@@ -67,6 +67,24 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	// Add context bar inline
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
+	}
+	// Add 5h rate limit inline
+	for _, seg := range segment.All() {
+		if seg.ID() == "fivehour" && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				line1 = append(line1, text)
+			}
+		}
+	}
+	// Add 7d rate limit inline
+	for _, seg := range segment.All() {
+		if seg.ID() == "ratelimit" && seg.Enabled(cfg) {
+			text, _ := seg.Render(s, cfg)
+			if text != "" {
+				line1 = append(line1, text)
+			}
+		}
 	}
 	if len(line1) > 0 {
 		lines = append(lines, joinSegments(line1))
@@ -111,7 +129,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	// Line 4+: Each tool/task segment on its own line
 	for _, seg := range segment.All() {
 		id := seg.ID()
-		if (id == "tools" || id == "tasks" || id == "agent" || id == "ratelimit") && seg.Enabled(cfg) {
+		if (id == "tools" || id == "tasks" || id == "agent") && seg.Enabled(cfg) {
 			text, _ := seg.Render(s, cfg)
 			if text != "" {
 				lines = append(lines, text)
@@ -140,7 +158,7 @@ func renderContextBar(s *state.State) string {
 	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
 	percentageText := percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage))
 
-	return fmt.Sprintf("%s %s", bar, percentageText)
+	return fmt.Sprintf("🧠 %s %s", bar, percentageText)
 }
 
 // renderTokenDetails renders token breakdown with colors

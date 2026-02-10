@@ -1,6 +1,7 @@
 package style
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -127,7 +128,9 @@ func Icon(icon string, style lipgloss.Style) string {
 	return style.Render(icon)
 }
 
-// RenderGradientBar renders a gradient progress bar
+// RenderGradientBar renders a static gradient progress bar
+// The gradient is always green → yellow → orange → red (0-100%)
+// Only the filled portion (based on percentage) is displayed
 func RenderGradientBar(percentage float64, width int) string {
 	if width <= 0 {
 		width = 10
@@ -148,10 +151,12 @@ func RenderGradientBar(percentage float64, width int) string {
 
 	for i := 0; i < width; i++ {
 		if i < filled {
-			// Use gradient characters for filled portion
-			char := getGradientChar(i, filled, width)
-			color := getColorForPercentage(percentage)
-			segments = append(segments, renderer.NewStyle().Foreground(color).Render(char))
+			// Calculate position in the full 0-100% gradient
+			positionPercent := (float64(i) / float64(width)) * 100
+
+			// Get color for this position in the static gradient
+			color := getStaticGradientColor(positionPercent)
+			segments = append(segments, renderer.NewStyle().Foreground(color).Render("█"))
 		} else {
 			// Empty portion
 			segments = append(segments, renderer.NewStyle().Foreground(ColorMuted).Render("░"))
@@ -161,32 +166,45 @@ func RenderGradientBar(percentage float64, width int) string {
 	return strings.Join(segments, "")
 }
 
-// getGradientChar returns the appropriate gradient character
-func getGradientChar(position, filled, width int) string {
-	if filled == 0 {
-		return "░"
-	}
+// getStaticGradientColor returns a color from the static gradient (0-100%)
+// Gradient: green (0%) → yellow (50%) → orange (75%) → red (100%)
+func getStaticGradientColor(position float64) lipgloss.Color {
+	// Define gradient stops with RGB colors
+	// Using TrueColor values for smooth transitions
+	var r, g, b uint8
 
-	// Use different characters based on position in filled area
-	progress := float64(position) / float64(filled)
-
-	if progress < 0.3 {
-		return "█" // solid
-	} else if progress < 0.6 {
-		return "▓" // dark
+	if position < 50 {
+		// Green (0-50%): #a6da95 → #eed49f (green to yellow)
+		// Interpolate between green and yellow
+		t := position / 50
+		r = lerp(0xa6, 0xee, t)
+		g = lerp(0xda, 0xd4, t)
+		b = lerp(0x95, 0x9f, t)
+	} else if position < 75 {
+		// Yellow to Orange (50-75%): #eed49f → #f5a97f
+		t := (position - 50) / 25
+		r = lerp(0xee, 0xf5, t)
+		g = lerp(0xd4, 0xa9, t)
+		b = lerp(0x9f, 0x7f, t)
 	} else {
-		return "▒" // medium
+		// Orange to Red (75-100%): #f5a97f → #ed8796
+		t := (position - 75) / 25
+		r = lerp(0xf5, 0xed, t)
+		g = lerp(0xa9, 0x87, t)
+		b = lerp(0x7f, 0x96, t)
 	}
+
+	return lipgloss.Color(formatRGB(r, g, b))
 }
 
-// getColorForPercentage returns color based on percentage thresholds
-func getColorForPercentage(percentage float64) lipgloss.Color {
-	if percentage >= 90 {
-		return ColorDanger // red
-	} else if percentage >= 70 {
-		return ColorWarning // yellow/orange
-	}
-	return ColorSuccess // green
+// lerp performs linear interpolation between two values
+func lerp(start, end uint8, t float64) uint8 {
+	return uint8(float64(start) + (float64(end)-float64(start))*t)
+}
+
+// formatRGB formats RGB values as a hex color string
+func formatRGB(r, g, b uint8) string {
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
 // RenderTable renders a table with headers and rows using lipgloss

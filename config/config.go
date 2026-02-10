@@ -23,16 +23,17 @@ type Config struct {
 }
 
 type DisplayConfig struct {
-	Model      bool
-	Path       bool
-	Context    bool
-	Git        bool
-	Tools      bool
-	Agents     bool
-	Tasks      bool
-	RateLimits bool
-	Duration   bool
-	Speed      bool
+	Model       bool
+	Path        bool
+	Context     bool
+	Git         bool
+	Tools       bool
+	Agents      bool
+	Tasks       bool
+	RateLimits  bool
+	Duration    bool
+	Speed       bool
+	FetchOAuth  bool // Enable OAuth API calls for rate limits
 }
 
 type GitConfig struct {
@@ -76,6 +77,7 @@ func Default() *Config {
 			RateLimits: true,
 			Duration:   true,
 			Speed:      true,
+			FetchOAuth: true, // Enable OAuth for rate limits by default
 		},
 		Git: GitConfig{
 			ShowBranch:      true,

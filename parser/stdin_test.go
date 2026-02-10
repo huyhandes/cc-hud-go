@@ -100,6 +100,57 @@ func TestParseStdinWithAgent(t *testing.T) {
 	}
 }
 
+func TestParseStdinWithRateLimits(t *testing.T) {
+	input := `{
+		"session_id": "test123",
+		"cwd": "/test/dir",
+		"model": {
+			"id": "claude-sonnet-4-5",
+			"display_name": "Sonnet 4.5"
+		},
+		"workspace": {
+			"current_dir": "/test/dir",
+			"project_dir": "/test/dir"
+		},
+		"context_window": {
+			"total_input_tokens": 10000,
+			"total_output_tokens": 2000,
+			"context_window_size": 200000,
+			"used_percentage": 6.0,
+			"remaining_percentage": 94.0
+		},
+		"rate_limits": {
+			"hourly_used": 10,
+			"hourly_total": 50,
+			"seven_day_used": 450,
+			"seven_day_total": 1000
+		}
+	}`
+
+	s := state.New()
+	err := ParseStdin([]byte(input), s)
+
+	if err != nil {
+		t.Fatalf("ParseStdin failed: %v", err)
+	}
+
+	if s.RateLimits.HourlyUsed != 10 {
+		t.Errorf("expected HourlyUsed 10, got %d", s.RateLimits.HourlyUsed)
+	}
+
+	if s.RateLimits.HourlyTotal != 50 {
+		t.Errorf("expected HourlyTotal 50, got %d", s.RateLimits.HourlyTotal)
+	}
+
+	if s.RateLimits.SevenDayUsed != 450 {
+		t.Errorf("expected SevenDayUsed 450, got %d", s.RateLimits.SevenDayUsed)
+	}
+
+	if s.RateLimits.SevenDayTotal != 1000 {
+		t.Errorf("expected SevenDayTotal 1000, got %d", s.RateLimits.SevenDayTotal)
+	}
+}
+
 func TestParseStdinInvalid(t *testing.T) {
 	tests := []struct {
 		name  string
