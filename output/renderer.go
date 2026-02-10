@@ -125,12 +125,22 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 // renderContextBar renders just the progress bar and percentage
 func renderContextBar(s *state.State) string {
 	percentage := s.Context.Percentage
-	bar := renderGradientBar(percentage, 10)
 
-	color := getColorForPercentage(percentage)
-	percentageText := fmt.Sprintf("%.0f%%", percentage)
+	// Use style package's gradient bar which has colors
+	bar := style.RenderGradientBar(percentage, 10)
 
-	return fmt.Sprintf("%s %s", bar, colorize(percentageText, color))
+	// Color the percentage text based on threshold
+	percentageColor := style.ColorSuccess
+	if percentage >= 90 {
+		percentageColor = style.ColorDanger
+	} else if percentage >= 70 {
+		percentageColor = style.ColorWarning
+	}
+
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
+	percentageText := percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage))
+
+	return fmt.Sprintf("%s %s", bar, percentageText)
 }
 
 // renderTokenDetails renders token breakdown with colors
@@ -185,62 +195,6 @@ func renderFileChanges(s *state.State) string {
 	)
 }
 
-// Helper functions for gradient bar rendering
-func renderGradientBar(percentage float64, width int) string {
-	if width <= 0 {
-		width = 10
-	}
-	if percentage < 0 {
-		percentage = 0
-	}
-	if percentage > 100 {
-		percentage = 100
-	}
-
-	filled := int(percentage / 100 * float64(width))
-	if filled > width {
-		filled = width
-	}
-
-	var bar strings.Builder
-	for i := 0; i < width; i++ {
-		if i < filled {
-			char := getGradientChar(i, filled)
-			bar.WriteString(char)
-		} else {
-			bar.WriteString("░")
-		}
-	}
-	return bar.String()
-}
-
-func getGradientChar(position, filled int) string {
-	if filled == 0 {
-		return "░"
-	}
-	progress := float64(position) / float64(filled)
-	if progress < 0.3 {
-		return "█"
-	} else if progress < 0.6 {
-		return "▓"
-	} else {
-		return "▒"
-	}
-}
-
-func getColorForPercentage(percentage float64) string {
-	if percentage >= 90 {
-		return "danger"
-	} else if percentage >= 70 {
-		return "warning"
-	}
-	return "success"
-}
-
-func colorize(text, colorName string) string {
-	// Simple ANSI color codes (will be replaced by actual theme colors in real output)
-	return text
-}
 
 // joinSegments joins segment outputs with two-space separators
 func joinSegments(segments []string) string {
