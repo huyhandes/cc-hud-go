@@ -138,3 +138,39 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigTheme(t *testing.T) {
+	cfg := Default()
+
+	if cfg.Theme == "" {
+		t.Error("Expected default theme to be set")
+	}
+
+	if cfg.Theme != "macchiato" {
+		t.Errorf("Expected default theme 'macchiato', got %s", cfg.Theme)
+	}
+}
+
+func TestConfigColorOverrides(t *testing.T) {
+	cfg := Default()
+
+	if cfg.Colors == nil {
+		t.Error("Expected Colors map to be initialized")
+	}
+}
+
+func TestTableConfigDefaults(t *testing.T) {
+	cfg := Default()
+
+	if cfg.Tables.ToolsThreshold != 5 {
+		t.Errorf("Expected ToolsThreshold 5, got %d", cfg.Tables.ToolsThreshold)
+	}
+
+	if cfg.Tables.TasksThreshold != 3 {
+		t.Errorf("Expected TasksThreshold 3, got %d", cfg.Tables.TasksThreshold)
+	}
+
+	if cfg.Tables.ContextThreshold != 999 {
+		t.Errorf("Expected ContextThreshold 999, got %d", cfg.Tables.ContextThreshold)
+	}
+}
