@@ -1,9 +1,8 @@
 package segment
 
 import (
-	"fmt"
-
 	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
 )
@@ -25,27 +24,14 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 
 	parts := []string{}
 
-	// Show cost with money icon - Orange/Accent (emphasis on cost)
 	if st.Cost.TotalUSD > 0 {
-		costStr := fmt.Sprintf("💰$%.4f", st.Cost.TotalUSD)
 		costStyle := style.GetRenderer().NewStyle().Foreground(style.ColorAccent).Bold(true)
-		parts = append(parts, costStyle.Render(costStr))
+		parts = append(parts, costStyle.Render("💰"+format.Cost(st.Cost.TotalUSD)))
 	}
 
-	// Show duration with clock icon - Cyan (time tracking)
 	if st.Cost.DurationMs > 0 {
-		durationSec := st.Cost.DurationMs / 1000
-		mins := durationSec / 60
-		secs := durationSec % 60
-
-		durationStr := ""
-		if mins > 0 {
-			durationStr = fmt.Sprintf("⏱ %dm%ds", mins, secs)
-		} else {
-			durationStr = fmt.Sprintf("⏱ %ds", secs)
-		}
 		durationStyle := style.GetRenderer().NewStyle().Foreground(style.ColorHighlight)
-		parts = append(parts, durationStyle.Render(durationStr))
+		parts = append(parts, durationStyle.Render("⏱ "+format.Duration(st.Cost.DurationMs)))
 	}
 
 	// File changes moved to git line in multi-line layout

@@ -6,7 +6,7 @@
 cc-hud-go/
 ├── main.go                    # Entry point, CLI flags, stdin reading
 ├── go.mod                     # Go module dependencies
-├── Makefile                   # Build automation
+├── justfile                   # Build automation (Just)
 │
 ├── config/                    # Configuration management
 │   ├── config.go             # Config struct, presets (Full/Essential/Minimal)
@@ -16,30 +16,39 @@ cc-hud-go/
 │   ├── state.go              # State struct, derived field calculation
 │   └── state_test.go         # State tests
 │
-├── parser/                    # Input parsing
-│   ├── parser.go             # Stdin JSON & transcript JSONL parsing
+├── parser/                    # Input parsing (split into 4 files)
+│   ├── stdin.go              # StdinData type, ParseStdin()
+│   ├── transcript.go         # TranscriptLine types, ParseTranscript*()
+│   ├── task.go               # TaskItem, TaskTracker, task processing
+│   ├── tool.go               # ToolCategory, CategorizeTool(), appTools map
 │   ├── stdin_test.go         # Stdin parser tests
 │   ├── transcript_test.go    # Transcript parser tests
 │   └── tasks_test.go         # Task tracking tests
 │
 ├── segment/                   # Display segments (modular components)
-│   ├── segment.go            # Segment interface & registry
-│   ├── model.go              # 🤖 Model name & plan type
-│   ├── context.go            # Token usage & gradient bar (NO 🧠 prefix)
-│   ├── git.go                # 🌿 Git branch, status, file stats
-│   ├── cost.go               # 💰 Cost tracking, ⏱ duration, 📝 file changes
-│   ├── tools.go              # 📦 App, 🔌 MCP, ⚡ Skills, 🎨 Custom tools
+│   ├── segment.go            # Segment interface, All(), ByID() registry
+│   ├── model.go              # Model name display
+│   ├── context.go            # Token usage & gradient bar
+│   ├── git.go                # Git branch, status, file stats
+│   ├── cost.go               # Cost tracking & duration
+│   ├── tools.go              # Tool usage categorization
 │   ├── tasks.go              # Task progress dashboard
-│   ├── agent.go              # 🤖 Active agent display
-│   ├── ratelimit.go          # API rate limit tracking
+│   ├── agent.go              # Active agent display
+│   ├── ratelimit.go          # API rate limit tracking (5h + 7d)
 │   └── *_test.go             # Segment tests
 │
-├── output/                    # JSON output formatting
+├── output/                    # Output formatting
 │   ├── renderer.go           # Multi-line & single-line layouts
 │   └── renderer_test.go      # Renderer tests
 │
-├── style/                     # Lipgloss styling system
-│   ├── style.go              # Theme integration, gradient bars, tables
+├── format/                    # Shared formatting helpers (DRY)
+│   ├── format.go             # Tokens(), Duration(), Cost()
+│   └── format_test.go        # Formatter tests
+│
+├── style/                     # Lipgloss styling system (split into 3 files)
+│   ├── style.go              # Colors, styles, Init(), ThresholdColor()
+│   ├── gradient.go           # RenderGradientBar(), color interpolation
+│   ├── table.go              # RenderTable() box-drawing tables
 │   ├── gradient_test.go      # Gradient rendering tests
 │   └── table_test.go         # Table rendering tests
 │
@@ -49,21 +58,21 @@ cc-hud-go/
 │   └── theme_test.go         # Theme tests
 │
 ├── internal/
-│   ├── git/                  # Git command integration
-│   │   ├── git.go           # Branch, status, diff stats
-│   │   └── git_test.go
-│   └── watcher/              # File watching utilities
-│       └── watcher.go
+│   └── git/                  # Git command integration
+│       ├── git.go            # Branch, status, diff stats
+│       └── git_test.go
 │
 ├── version/                   # Version management
 │   ├── version.go            # Git-based version detection
 │   └── version_test.go
 │
 ├── docs/                      # Documentation
+│   ├── CODEMAP.md            # This file
+│   ├── MANUAL_TEST.md        # Manual testing guide
+│   ├── TEST_RESULTS.md       # Test results
 │   ├── RELEASE_NOTES_v0.2.0.md
 │   ├── BUG_FIXES.md
-│   ├── CI_FIXES.md
-│   └── CODEMAP.md            # This file
+│   └── CI_FIXES.md
 │
 ├── examples/                  # Example configurations
 │   ├── README.md
@@ -105,13 +114,11 @@ cc-hud-go/
   - Automatic derived field calculation (percentages, totals)
   - Context, Git, Tools, Tasks, Cost tracking
 
-### Parsing
-- `parser/parser.go` (515 lines)
-  - **StdinData struct** - Claude Code API format
-  - **ParseStdin()** - Session metadata parsing
-  - **ParseTranscript()** - Tool & task tracking from JSONL
-  - **Tool categorization** - App/Internal/Custom/MCP/Skill
-  - **Task tracking** - TodoWrite, TaskCreate, TaskUpdate processing
+### Parsing (split into 4 files)
+- `parser/stdin.go` - StdinData struct, ParseStdin()
+- `parser/transcript.go` - TranscriptLine types, ParseTranscript*()
+- `parser/task.go` - TaskTracker, task tool processing
+- `parser/tool.go` - ToolCategory, CategorizeTool()
 
 ### Display Segments
 
@@ -134,20 +141,20 @@ type Segment interface {
 7. `agent.go` (45 lines) - 🤖 active agent
 8. `ratelimit.go` (75 lines) - Rate limit tracking
 
+### Formatting
+- `format/format.go` - Shared helpers: Tokens(), Duration(), Cost()
+
 ### Output Rendering
-- `output/renderer.go` (280 lines)
-  - **renderMultiLine()** - Custom 4-line layout
+- `output/renderer.go`
+  - **renderMultiLine()** - Custom 4-line layout (uses ByID() map)
   - **renderSingleLine()** - Compact horizontal layout
   - **renderContextBar()** - Gradient bar with percentage
-  - **renderTokenDetails()** - Colored token breakdown
   - **renderFileChanges()** - +/- line changes
 
-### Styling
-- `style/style.go` (200 lines)
-  - **Init()** - Theme color loading
-  - **RenderGradientBar()** - Progress bars with smooth transitions
-  - **RenderTable()** - Box-drawing table rendering
-  - **13 semantic colors** - success, warning, danger, input, output, etc.
+### Styling (split into 3 files)
+- `style/style.go` - Colors, Init(), ThresholdColor(), GetRenderer()
+- `style/gradient.go` - RenderGradientBar(), color interpolation
+- `style/table.go` - RenderTable() box-drawing tables
 
 ### Themes
 - `theme/catppuccin.go` (180 lines)
@@ -295,7 +302,7 @@ Overall          ~85%
 When adding features:
 1. Follow TDD approach (test first)
 2. Update both code and documentation
-3. Run `make check` before committing
+3. Run `just check` before committing
 4. Ensure CI passes on all platforms
 
 ---

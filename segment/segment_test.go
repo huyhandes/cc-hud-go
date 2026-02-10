@@ -7,6 +7,26 @@ import (
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
+func TestByID(t *testing.T) {
+	m := ByID()
+	all := All()
+
+	if len(m) != len(all) {
+		t.Errorf("ByID() returned %d segments, All() returned %d", len(m), len(all))
+	}
+
+	for _, seg := range all {
+		got, ok := m[seg.ID()]
+		if !ok {
+			t.Errorf("ByID() missing segment %q", seg.ID())
+			continue
+		}
+		if got.ID() != seg.ID() {
+			t.Errorf("ByID()[%q].ID() = %q", seg.ID(), got.ID())
+		}
+	}
+}
+
 func TestRegistry(t *testing.T) {
 	cfg := config.Default()
 	s := state.New()

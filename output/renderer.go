@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/segment"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
@@ -50,55 +51,42 @@ func renderSingleLine(s *state.State, cfg *config.Config) (string, error) {
 }
 
 func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
-	// Custom 4-line layout as requested
 	var lines []string
+	segs := segment.ByID()
+
+	renderSeg := func(id string) string {
+		seg, ok := segs[id]
+		if !ok || !seg.Enabled(cfg) {
+			return ""
+		}
+		text, _ := seg.Render(s, cfg)
+		return text
+	}
 
 	// Line 1: Model Context Size | Context Bar | 5h Limit | 7d Limit
 	line1 := []string{}
 
-	// Combine Model and Context Size together
-	modelAndContext := ""
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if id == "model" && seg.Enabled(cfg) {
-			text, _ := seg.Render(s, cfg)
-			if text != "" {
-				modelAndContext = text
-			}
-		}
-	}
+	modelAndContext := renderSeg("model")
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+		ctxSize := renderContextSize(s)
 		if modelAndContext != "" {
-			modelAndContext += " " + renderContextSize(s)
+			modelAndContext += " " + ctxSize
 		} else {
-			modelAndContext = renderContextSize(s)
+			modelAndContext = ctxSize
 		}
 	}
 	if modelAndContext != "" {
 		line1 = append(line1, modelAndContext)
 	}
 
-	// Add context bar
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
 	}
-	// Add 5h rate limit inline
-	for _, seg := range segment.All() {
-		if seg.ID() == "fivehour" && seg.Enabled(cfg) {
-			text, _ := seg.Render(s, cfg)
-			if text != "" {
-				line1 = append(line1, text)
-			}
-		}
+	if text := renderSeg("fivehour"); text != "" {
+		line1 = append(line1, text)
 	}
-	// Add 7d rate limit inline
-	for _, seg := range segment.All() {
-		if seg.ID() == "ratelimit" && seg.Enabled(cfg) {
-			text, _ := seg.Render(s, cfg)
-			if text != "" {
-				line1 = append(line1, text)
-			}
-		}
+	if text := renderSeg("ratelimit"); text != "" {
+		line1 = append(line1, text)
 	}
 	if len(line1) > 0 {
 		lines = append(lines, joinSegments(line1))
@@ -112,7 +100,6 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 			line2 = append(line2, renderCacheTokens(s))
 		}
 	}
-	// Add cost and time
 	if s.Cost.TotalUSD > 0 {
 		line2 = append(line2, renderCost(s))
 	}
@@ -125,16 +112,9 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 
 	// Line 3: Git | File changes
 	line3 := []string{}
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if id == "git" && seg.Enabled(cfg) {
-			text, _ := seg.Render(s, cfg)
-			if text != "" {
-				line3 = append(line3, text)
-			}
-		}
+	if text := renderSeg("git"); text != "" {
+		line3 = append(line3, text)
 	}
-	// Add file changes to git line
 	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
 		line3 = append(line3, renderFileChanges(s))
 	}
@@ -143,13 +123,9 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	}
 
 	// Line 4+: Each tool/task segment on its own line
-	for _, seg := range segment.All() {
-		id := seg.ID()
-		if (id == "tools" || id == "tasks" || id == "agent") && seg.Enabled(cfg) {
-			text, _ := seg.Render(s, cfg)
-			if text != "" {
-				lines = append(lines, text)
-			}
+	for _, id := range []string{"tools", "tasks", "agent"} {
+		if text := renderSeg(id); text != "" {
+			lines = append(lines, text)
 		}
 	}
 
@@ -158,16 +134,8 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 
 // renderContextSize renders just the total context window size
 func renderContextSize(s *state.State) string {
-	formatTokens := func(tokens int) string {
-		if tokens >= 1000 {
-			return fmt.Sprintf("%dk", tokens/1000)
-		}
-		return fmt.Sprintf("%d", tokens)
-	}
-
-	// Use Info color (cyan) for context size - represents static information
 	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInfo)
-	return fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens)))
+	return fmt.Sprintf("⚡ %s", totalStyle.Render(format.Tokens(s.Context.TotalTokens)))
 }
 
 // renderContextBar renders just the progress bar and percentage
@@ -177,112 +145,43 @@ func renderContextBar(s *state.State) string {
 	// Use style package's gradient bar which has colors
 	bar := style.RenderGradientBar(percentage, 10)
 
-	// Color the percentage text based on threshold
-	percentageColor := style.ColorSuccess
-	if percentage >= 90 {
-		percentageColor = style.ColorDanger
-	} else if percentage >= 70 {
-		percentageColor = style.ColorWarning
-	}
-
-	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(percentage))
 	percentageText := percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage))
 
 	return fmt.Sprintf("🧠 %s %s", bar, percentageText)
 }
 
-// renderTokenDetails renders token breakdown with colors (legacy - kept for single line mode)
-func renderTokenDetails(s *state.State) string {
-	formatTokens := func(tokens int) string {
-		if tokens >= 1000 {
-			return fmt.Sprintf("%dk", tokens/1000)
-		}
-		return fmt.Sprintf("%d", tokens)
-	}
-
-	details := []string{}
-
-	// Input tokens - Blue
-	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
-	details = append(details, fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))))
-
-	// Output tokens - Emerald/Green
-	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
-	details = append(details, fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))))
-
-	// Cache stats if available
-	if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
-		cacheReadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheRead)
-		cacheWriteStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheWrite)
-		details = append(details, fmt.Sprintf("💾 %s%s%s",
-			cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
-			style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
-			cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens))))
-	}
-
-	// Total context size - Muted gray
-	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
-	details = append(details, fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))))
-
-	return strings.Join(details, " ")
-}
-
 // renderIOTokens renders input/output token counts
 func renderIOTokens(s *state.State) string {
-	formatTokens := func(tokens int) string {
-		if tokens >= 1000 {
-			return fmt.Sprintf("%dk", tokens/1000)
-		}
-		return fmt.Sprintf("%d", tokens)
-	}
-
 	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
 	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
 
 	return fmt.Sprintf("📥 %s  📤 %s",
-		inStyle.Render(formatTokens(s.Context.TotalInputTokens)),
-		outStyle.Render(formatTokens(s.Context.TotalOutputTokens)))
+		inStyle.Render(format.Tokens(s.Context.TotalInputTokens)),
+		outStyle.Render(format.Tokens(s.Context.TotalOutputTokens)))
 }
 
 // renderCacheTokens renders cache read/write token counts
 func renderCacheTokens(s *state.State) string {
-	formatTokens := func(tokens int) string {
-		if tokens >= 1000 {
-			return fmt.Sprintf("%dk", tokens/1000)
-		}
-		return fmt.Sprintf("%d", tokens)
-	}
-
 	cacheReadStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheRead)
 	cacheWriteStyle := style.GetRenderer().NewStyle().Foreground(style.ColorCacheWrite)
 
 	return fmt.Sprintf("💾 %s%s%s",
-		cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
+		cacheReadStyle.Render("R:"+format.Tokens(s.Context.CacheReadTokens)),
 		style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
-		cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens)))
+		cacheWriteStyle.Render("W:"+format.Tokens(s.Context.CacheCreateTokens)))
 }
 
 // renderCost renders the total cost
 func renderCost(s *state.State) string {
 	costStyle := style.GetRenderer().NewStyle().Foreground(style.ColorAccent).Bold(true)
-	return costStyle.Render(fmt.Sprintf("💰$%.4f", s.Cost.TotalUSD))
+	return costStyle.Render("💰" + format.Cost(s.Cost.TotalUSD))
 }
 
 // renderTime renders the session duration
 func renderTime(s *state.State) string {
-	durationSec := s.Cost.DurationMs / 1000
-	mins := durationSec / 60
-	secs := durationSec % 60
-
-	durationStr := ""
-	if mins > 0 {
-		durationStr = fmt.Sprintf("⏱ %dm%ds", mins, secs)
-	} else {
-		durationStr = fmt.Sprintf("⏱ %ds", secs)
-	}
-
 	durationStyle := style.GetRenderer().NewStyle().Foreground(style.ColorHighlight)
-	return durationStyle.Render(durationStr)
+	return durationStyle.Render("⏱ " + format.Duration(s.Cost.DurationMs))
 }
 
 // renderFileChanges renders file changes (lines added/removed)

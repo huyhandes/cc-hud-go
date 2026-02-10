@@ -66,15 +66,12 @@ type MCPServer struct {
 }
 
 type SkillUsage struct {
-	Count    int
-	LastUsed time.Time
-	Duration time.Duration
+	Count int
 }
 
 type AgentInfo struct {
 	ActiveAgent string
 	TaskDesc    string
-	ElapsedTime time.Duration
 }
 
 type Task struct {
@@ -94,7 +91,6 @@ type SessionInfo struct {
 	TranscriptPath string
 	StartTime      time.Time
 	Duration       time.Duration
-	TokenSpeed     float64
 }
 
 type CostInfo struct {

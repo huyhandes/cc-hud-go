@@ -156,28 +156,108 @@ func TestParseStdinInvalid(t *testing.T) {
 		name  string
 		input string
 	}{
-		{
-			name:  "invalid JSON",
-			input: `{"model": invalid}`,
-		},
-		{
-			name:  "empty input",
-			input: ``,
-		},
-		{
-			name:  "partial JSON",
-			input: `{"model": "test"`,
-		},
+		{"invalid JSON", `{"model": invalid}`},
+		{"empty input", ``},
+		{"partial JSON", `{"model": "test"`},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := state.New()
 			err := ParseStdin([]byte(tt.input), s)
-
 			if err == nil {
 				t.Error("expected error for invalid input")
 			}
 		})
+	}
+}
+
+func TestParseStdinModelNameFallback(t *testing.T) {
+	// display_name empty -> should use id
+	input := `{
+		"session_id": "test",
+		"model": {"id": "claude-opus-4-6", "display_name": ""},
+		"workspace": {},
+		"context_window": {"context_window_size": 200000}
+	}`
+
+	s := state.New()
+	err := ParseStdin([]byte(input), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.Model.Name != "claude-opus-4-6" {
+		t.Errorf("expected model ID fallback, got %q", s.Model.Name)
+	}
+}
+
+func TestParseStdinWithCost(t *testing.T) {
+	input := `{
+		"session_id": "test",
+		"model": {"id": "test", "display_name": "Test"},
+		"workspace": {},
+		"context_window": {"context_window_size": 200000},
+		"cost": {
+			"total_cost_usd": 0.567,
+			"total_duration_ms": 120000,
+			"total_api_duration_ms": 90000,
+			"total_lines_added": 100,
+			"total_lines_removed": 25
+		}
+	}`
+
+	s := state.New()
+	err := ParseStdin([]byte(input), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if s.Cost.TotalUSD != 0.567 {
+		t.Errorf("expected cost 0.567, got %f", s.Cost.TotalUSD)
+	}
+	if s.Cost.DurationMs != 120000 {
+		t.Errorf("expected duration 120000, got %d", s.Cost.DurationMs)
+	}
+	if s.Cost.APIDurationMs != 90000 {
+		t.Errorf("expected api duration 90000, got %d", s.Cost.APIDurationMs)
+	}
+	if s.Cost.LinesAdded != 100 {
+		t.Errorf("expected 100 lines added, got %d", s.Cost.LinesAdded)
+	}
+	if s.Cost.LinesRemoved != 25 {
+		t.Errorf("expected 25 lines removed, got %d", s.Cost.LinesRemoved)
+	}
+}
+
+func TestParseStdinNilOptionalFields(t *testing.T) {
+	// No cost, no agent, no rate_limits, no current_usage
+	input := `{
+		"session_id": "bare",
+		"model": {"id": "test", "display_name": "Minimal"},
+		"workspace": {},
+		"context_window": {
+			"total_input_tokens": 5000,
+			"context_window_size": 200000
+		}
+	}`
+
+	s := state.New()
+	err := ParseStdin([]byte(input), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if s.Cost.TotalUSD != 0 {
+		t.Error("expected zero cost when cost field is nil")
+	}
+	if s.Agents.ActiveAgent != "" {
+		t.Error("expected no agent when agent field is nil")
+	}
+	if s.RateLimits.HourlyTotal != 0 {
+		t.Error("expected zero rate limits when field is nil")
+	}
+	// Without current_usage, UsedTokens should fallback to TotalInputTokens
+	if s.Context.UsedTokens != 5000 {
+		t.Errorf("expected UsedTokens=5000 fallback, got %d", s.Context.UsedTokens)
 	}
 }

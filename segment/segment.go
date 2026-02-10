@@ -12,7 +12,7 @@ type Segment interface {
 	Enabled(cfg *config.Config) bool
 }
 
-// All returns all available segments
+// All returns all available segments in display order
 func All() []Segment {
 	return []Segment{
 		&ModelSegment{},
@@ -25,4 +25,13 @@ func All() []Segment {
 		&FiveHourSegment{},
 		&RateLimitSegment{},
 	}
+}
+
+// ByID returns a map of segment ID to Segment for O(1) lookups
+func ByID() map[string]Segment {
+	m := make(map[string]Segment)
+	for _, seg := range All() {
+		m[seg.ID()] = seg
+	}
+	return m
 }

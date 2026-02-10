@@ -14,7 +14,6 @@ type Config struct {
 	Preset            string
 	LineLayout        string
 	PathLevels        int
-	ContextValue      string
 	SevenDayThreshold int
 	Display           DisplayConfig
 	Git               GitConfig
@@ -23,17 +22,15 @@ type Config struct {
 }
 
 type DisplayConfig struct {
-	Model       bool
-	Path        bool
-	Context     bool
-	Git         bool
-	Tools       bool
-	Agents      bool
-	Tasks       bool
-	RateLimits  bool
-	Duration    bool
-	Speed       bool
-	FetchOAuth  bool // Enable OAuth API calls for rate limits
+	Model      bool
+	Context    bool
+	Git        bool
+	Tools      bool
+	Agents     bool
+	Tasks      bool
+	RateLimits bool
+	Duration   bool
+	FetchOAuth bool
 }
 
 type GitConfig struct {
@@ -64,11 +61,9 @@ func Default() *Config {
 		Preset:            "full",
 		LineLayout:        "expanded",
 		PathLevels:        2,
-		ContextValue:      "percentage",
 		SevenDayThreshold: 80,
 		Display: DisplayConfig{
 			Model:      true,
-			Path:       true,
 			Context:    true,
 			Git:        true,
 			Tools:      true,
@@ -76,8 +71,7 @@ func Default() *Config {
 			Tasks:      true,
 			RateLimits: true,
 			Duration:   true,
-			Speed:      true,
-			FetchOAuth: true, // Enable OAuth for rate limits by default
+			FetchOAuth: true,
 		},
 		Git: GitConfig{
 			ShowBranch:      true,
@@ -108,7 +102,6 @@ func Essential() *Config {
 	cfg.Display.Agents = false
 	cfg.Display.RateLimits = false
 	cfg.Display.Duration = false
-	cfg.Display.Speed = false
 	return cfg
 }
 
@@ -118,14 +111,12 @@ func Minimal() *Config {
 	cfg.Preset = "minimal"
 	cfg.LineLayout = "compact"
 	cfg.PathLevels = 1
-	cfg.Display.Path = false
 	cfg.Display.Git = false
 	cfg.Display.Tools = false
 	cfg.Display.Agents = false
 	cfg.Display.Tasks = false
 	cfg.Display.RateLimits = false
 	cfg.Display.Duration = false
-	cfg.Display.Speed = false
 	return cfg
 }
 

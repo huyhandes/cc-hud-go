@@ -73,6 +73,32 @@ func (m *mockTheme) GetColor(semantic string) lipgloss.Color {
 	return lipgloss.Color("#ff0000")
 }
 
+func TestThresholdColor(t *testing.T) {
+	theme := &mockTheme{}
+	Init(theme)
+
+	tests := []struct {
+		percentage float64
+		want       lipgloss.Color
+	}{
+		{0, ColorSuccess},
+		{50, ColorSuccess},
+		{69.9, ColorSuccess},
+		{70, ColorWarning},
+		{85, ColorWarning},
+		{89.9, ColorWarning},
+		{90, ColorDanger},
+		{100, ColorDanger},
+	}
+
+	for _, tt := range tests {
+		got := ThresholdColor(tt.percentage)
+		if got != tt.want {
+			t.Errorf("ThresholdColor(%.1f) = %s, want %s", tt.percentage, got, tt.want)
+		}
+	}
+}
+
 func TestInitWithTheme(t *testing.T) {
 	theme := &mockTheme{}
 	Init(theme)

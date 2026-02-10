@@ -417,6 +417,322 @@ func TestParseTranscriptWithMixedOperations(t *testing.T) {
 	}
 }
 
+func TestParseTodoWriteInvalidTodos(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
+	// todos is not an array
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TodoWrite",
+				"input": {
+					"todos": "not-an-array"
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	if len(tracker.Tasks) != 0 {
+		t.Errorf("expected no tasks for invalid todos, got %d", len(tracker.Tasks))
+	}
+}
+
+func TestParseTodoWriteWithNonMapItems(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
+	// Mix of valid and invalid (non-map) items
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TodoWrite",
+				"input": {
+					"todos": [
+						"just a string",
+						{"content": "Valid task", "status": "pending"},
+						42
+					]
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	if len(tracker.Tasks) != 1 {
+		t.Errorf("expected 1 valid task, got %d", len(tracker.Tasks))
+	}
+}
+
+func TestParseTodoWriteDeletedStatus(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TodoWrite",
+				"input": {
+					"todos": [
+						{"content": "Keep", "status": "pending"},
+						{"content": "Remove", "status": "deleted"},
+						{"content": "Also keep", "status": "completed"}
+					]
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	if len(tracker.Tasks) != 2 {
+		t.Errorf("expected 2 tasks (deleted filtered), got %d", len(tracker.Tasks))
+	}
+}
+
+func TestParseTaskCreateNoSubject(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{},
+		TaskIDMap: make(map[string]int),
+	}
+
+	t.Run("description fallback", func(t *testing.T) {
+		line := `{
+			"type": "assistant",
+			"message": {
+				"content": [{
+					"type": "tool_use",
+					"name": "TaskCreate",
+					"input": {
+						"description": "A description only"
+					}
+				}]
+			}
+		}`
+		_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+		if tracker.Tasks[0].Content != "A description only" {
+			t.Errorf("expected description fallback, got %q", tracker.Tasks[0].Content)
+		}
+	})
+
+	t.Run("untitled fallback", func(t *testing.T) {
+		tracker2 := &TaskTracker{Tasks: []TaskItem{}, TaskIDMap: make(map[string]int)}
+		line := `{
+			"type": "assistant",
+			"message": {
+				"content": [{
+					"type": "tool_use",
+					"name": "TaskCreate",
+					"input": {}
+				}]
+			}
+		}`
+		_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker2)
+		if tracker2.Tasks[0].Content != "Untitled task" {
+			t.Errorf("expected 'Untitled task', got %q", tracker2.Tasks[0].Content)
+		}
+	})
+}
+
+func TestParseTaskUpdateOutOfBounds(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{{Content: "Only task", Status: "pending"}},
+		TaskIDMap: make(map[string]int),
+	}
+
+	// taskId="99" with only 1 task
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TaskUpdate",
+				"input": {
+					"taskId": "99",
+					"status": "completed"
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	if s.Tasks.Completed != 0 {
+		t.Error("out-of-bounds taskId should not update any task")
+	}
+	if s.Tasks.Pending != 1 {
+		t.Error("original task should remain pending")
+	}
+}
+
+func TestParseTaskUpdateNoTaskID(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{{Content: "Task", Status: "pending"}},
+		TaskIDMap: make(map[string]int),
+	}
+
+	// Missing taskId
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TaskUpdate",
+				"input": {
+					"status": "completed"
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+	updateStateFromTasks(tracker, s)
+
+	if s.Tasks.Completed != 0 {
+		t.Error("TaskUpdate without taskId should not update any task")
+	}
+}
+
+func TestParseTaskUpdateSubjectChange(t *testing.T) {
+	s := state.New()
+	tracker := &TaskTracker{
+		Tasks:     []TaskItem{{Content: "Original", Status: "pending"}},
+		TaskIDMap: map[string]int{"1": 0},
+	}
+
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "TaskUpdate",
+				"input": {
+					"taskId": "1",
+					"subject": "Updated subject"
+				}
+			}]
+		}
+	}`
+
+	_ = ParseTranscriptLineWithTracker([]byte(line), s, tracker)
+
+	if tracker.Tasks[0].Content != "Updated subject" {
+		t.Errorf("expected 'Updated subject', got %q", tracker.Tasks[0].Content)
+	}
+}
+
+func TestParseTaskDeleteIndexAdjustment(t *testing.T) {
+	tracker := &TaskTracker{
+		Tasks: []TaskItem{
+			{Content: "Task A", Status: "pending"},
+			{Content: "Task B", Status: "pending"},
+			{Content: "Task C", Status: "pending"},
+		},
+		TaskIDMap: map[string]int{"a": 0, "b": 1, "c": 2},
+	}
+
+	// Delete task B (index 1)
+	block := ContentBlock{
+		Name:  "TaskUpdate",
+		Input: map[string]interface{}{"taskId": "b", "status": "deleted"},
+	}
+	processTaskTool(block, tracker)
+
+	if len(tracker.Tasks) != 2 {
+		t.Fatalf("expected 2 tasks after delete, got %d", len(tracker.Tasks))
+	}
+
+	// Index for "c" should be shifted from 2 to 1
+	if idx, ok := tracker.TaskIDMap["c"]; !ok || idx != 1 {
+		t.Errorf("expected 'c' index 1 after delete, got %d, ok=%v", idx, ok)
+	}
+	// "b" should be gone
+	if _, ok := tracker.TaskIDMap["b"]; ok {
+		t.Error("deleted task ID should be removed from map")
+	}
+	// "a" should stay at 0
+	if idx := tracker.TaskIDMap["a"]; idx != 0 {
+		t.Errorf("expected 'a' index 0, got %d", idx)
+	}
+}
+
+func TestResolveTaskID(t *testing.T) {
+	tests := []struct {
+		name  string
+		input interface{}
+		want  string
+	}{
+		{"string", "abc", "abc"},
+		{"float64", float64(42), "42"},
+		{"int", 7, "7"},
+		{"nil", nil, ""},
+		{"bool", true, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resolveTaskID(tt.input)
+			if got != tt.want {
+				t.Errorf("resolveTaskID(%v) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeTaskStatus(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"completed", "completed"},
+		{"complete", "completed"},
+		{"done", "completed"},
+		{"in_progress", "in_progress"},
+		{"running", "in_progress"},
+		{"pending", "pending"},
+		{"not_started", "pending"},
+		{"", "pending"},
+		{"deleted", "deleted"},
+		{"unknown_value", "pending"},
+		{"COMPLETED", "completed"},
+		{"In_Progress", "in_progress"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := normalizeTaskStatus(tt.input)
+			if got != tt.want {
+				t.Errorf("normalizeTaskStatus(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestParseTaskUpdate1BasedTaskID(t *testing.T) {
 	// Test the fix for 1-based task ID indexing bug
 	// Previously: TaskUpdate with taskId="1" would update index 1 (task 2)

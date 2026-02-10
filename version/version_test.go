@@ -6,7 +6,6 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	// Save original version
 	originalVersion := Version
 	defer func() { Version = originalVersion }()
 
@@ -21,7 +20,15 @@ func TestGet(t *testing.T) {
 	t.Run("falls back to git or dev", func(t *testing.T) {
 		Version = ""
 		got := Get()
-		// Should return either git version or "dev"
+		if got == "" {
+			t.Error("Get() should not return empty string")
+		}
+	})
+
+	t.Run("dev version falls back to git or dev", func(t *testing.T) {
+		Version = "dev"
+		got := Get()
+		// "dev" is treated same as empty — tries git first
 		if got == "" {
 			t.Error("Get() should not return empty string")
 		}

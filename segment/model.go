@@ -23,13 +23,6 @@ func (m *ModelSegment) Render(s *state.State, cfg *config.Config) (string, error
 		return "", nil
 	}
 
-	// Add AI/robot icon for model
-	icon := "🤖"
 	model := style.ModelStyle.Render(s.Model.Name)
-
-	if s.Model.PlanType != "" {
-		return fmt.Sprintf("%s %s", icon, model), nil
-	}
-
-	return fmt.Sprintf("%s %s", icon, model), nil
+	return fmt.Sprintf("🤖 %s", model), nil
 }

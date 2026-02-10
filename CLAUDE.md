@@ -124,40 +124,55 @@ cc-hud-go/
 ├── state/           # Session state tracking and derived fields
 │   ├── state.go
 │   └── state_test.go
-├── parser/          # Dual input parsing (stdin JSON & transcript JSONL)
-│   ├── parser.go
+├── parser/          # Dual input parsing (split into 4 files)
+│   ├── stdin.go              # StdinData type, ParseStdin()
+│   ├── transcript.go         # TranscriptLine types, ParseTranscript*()
+│   ├── task.go               # TaskTracker, task tool processing
+│   ├── tool.go               # ToolCategory, CategorizeTool()
 │   ├── stdin_test.go
 │   ├── transcript_test.go
 │   └── tasks_test.go
 ├── segment/         # Modular display segments
-│   ├── segment.go   # Segment interface & registry
-│   ├── model.go     # Model and plan type display
+│   ├── segment.go   # Segment interface, All(), ByID() registry
+│   ├── model.go     # Model name display
 │   ├── context.go   # Token usage and context window
 │   ├── git.go       # Git branch, status, file stats
-│   ├── cost.go      # Cost tracking and code metrics
+│   ├── cost.go      # Cost tracking and duration
 │   ├── tools.go     # Tool usage categorization
 │   ├── tasks.go     # Task progress tracking
-│   ├── agent.go     # Active agent and task info
-│   ├── ratelimit.go # API rate limit monitoring
+│   ├── agent.go     # Active agent info
+│   ├── ratelimit.go # API rate limit monitoring (5h + 7d)
 │   └── *_test.go
-├── output/          # JSON output renderer for statusline API
+├── output/          # Output renderer for statusline API
 │   ├── renderer.go
 │   └── renderer_test.go
-├── style/           # Lipgloss styling with semantic color system
-│   └── style.go
+├── format/          # Shared formatting helpers (DRY)
+│   ├── format.go    # Tokens(), Duration(), Cost()
+│   └── format_test.go
+├── style/           # Lipgloss styling (split into 3 files)
+│   ├── style.go     # Colors, Init(), ThresholdColor()
+│   ├── gradient.go  # RenderGradientBar(), color interpolation
+│   ├── table.go     # RenderTable() box-drawing tables
+│   ├── gradient_test.go
+│   └── table_test.go
+├── theme/           # Theme system (Catppuccin variants)
+│   ├── theme.go
+│   ├── catppuccin.go
+│   └── theme_test.go
 ├── version/         # Version detection and build info
 │   ├── version.go
 │   └── version_test.go
 ├── internal/
-│   ├── git/         # Git integration via command execution
-│   │   ├── git.go
-│   │   └── git_test.go
-│   └── watcher/     # File watching utilities
-│       └── watcher.go
+│   └── git/         # Git integration via command execution
+│       ├── git.go
+│       └── git_test.go
 ├── testdata/        # Test fixtures and sample data
 ├── docs/            # Documentation and planning
 │   ├── plans/       # Design and implementation plans
-│   └── COLOR_SCHEME.md
+│   ├── CODEMAP.md
+│   ├── COLOR_SCHEME.md
+│   ├── MANUAL_TEST.md
+│   └── TEST_RESULTS.md
 ├── assets/          # Screenshots and preview images
 ├── main.go          # Application entry point
 ├── main_test.go     # Main package tests
@@ -192,15 +207,21 @@ type Segment interface {
 }
 ```
 
-Available segments:
-- **ModelSegment** - Current Claude model and plan type
+Available segments (accessed via `All()` or `ByID()` map):
+- **ModelSegment** - Current Claude model name
 - **ContextSegment** - Token usage with color-coded thresholds
 - **GitSegment** - Branch, dirty files, ahead/behind, file stats
-- **CostSegment** - Cost tracking, duration, lines changed
+- **CostSegment** - Cost tracking, duration
 - **ToolsSegment** - Tool usage categorized by type (App/MCP/Skills/Custom)
 - **TasksSegment** - Task completion progress
 - **AgentSegment** - Active agent name and current task
+- **FiveHourSegment** - 5-hour rate limit tracking
 - **RateLimitSegment** - 7-day API usage tracking
+
+**Format Package** - Shared formatting helpers eliminating duplication:
+- `format.Tokens()` - Token count formatting (e.g. 5000 -> "5k")
+- `format.Duration()` - Milliseconds to human-readable duration
+- `format.Cost()` - USD cost formatting
 
 **State Management** - Centralized session state with automatic derived field calculation:
 - Context percentage calculation
@@ -208,16 +229,17 @@ Available segments:
 - Tool usage categorization
 - Task progress aggregation
 
-**Parser System** - Dual parsing approach:
-- **Stdin parser** - Session data from Claude Code (JSON)
-- **Transcript parser** - Tool usage tracking from JSONL file
+**Parser System** - Split into 4 files by concern:
+- `stdin.go` - Session data from Claude Code (JSON)
+- `transcript.go` - Tool usage tracking from JSONL file
+- `task.go` - Task state management (TodoWrite/TaskCreate/TaskUpdate)
+- `tool.go` - Tool categorization (App/Internal/Custom/MCP/Skill)
 
-**Style System** - Semantic color palette using Lipgloss:
-- Status colors (green/yellow/red for thresholds)
-- Flow colors (blue for input, emerald for output)
-- Cache colors (purple for reads, pink for writes)
-- Primary UI colors (purple, cyan, orange)
-- TrueColor support with forced color output
+**Style System** - Semantic color palette using Lipgloss (split into 3 files):
+- `style.go` - Theme integration, ThresholdColor() helper
+- `gradient.go` - Gradient progress bars with smooth color transitions
+- `table.go` - Box-drawing table rendering
+- 13 semantic colors with TrueColor support
 
 **Configuration** - Three preset modes with granular control:
 - **Full** - All features enabled
@@ -257,8 +279,7 @@ The tool displays comprehensive session information including:
 - Cost tracking in USD
 - Session duration and API duration
 - Code changes (lines added/removed)
-- Token processing speed
-- API rate limits (hourly and 7-day)
+- API rate limits (5-hour and 7-day)
 
 Refer to the official docs for the complete API: https://code.claude.com/docs/en/statusline
 

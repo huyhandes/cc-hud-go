@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/huyhandes/cc-hud-go/config"
+	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
 )
@@ -29,23 +30,7 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 	// Build gradient progress bar
 	bar := style.RenderGradientBar(percentage, 10)
 
-	// Format tokens in thousands (k)
-	formatTokens := func(tokens int) string {
-		if tokens >= 1000 {
-			return fmt.Sprintf("%dk", tokens/1000)
-		}
-		return fmt.Sprintf("%d", tokens)
-	}
-
-	// Main display with bar and percentage
-	percentageColor := style.ColorSuccess
-	if percentage >= 90 {
-		percentageColor = style.ColorDanger
-	} else if percentage >= 70 {
-		percentageColor = style.ColorWarning
-	}
-
-	percentageStyle := style.GetRenderer().NewStyle().Foreground(percentageColor)
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(percentage))
 
 	// Detailed token breakdown with semantic colors
 	details := []string{}
@@ -53,13 +38,13 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 	// Input tokens - Blue (incoming data)
 	inStyle := style.GetRenderer().NewStyle().Foreground(style.ColorInput)
 	details = append(details,
-		fmt.Sprintf("📥 %s", inStyle.Render(formatTokens(s.Context.TotalInputTokens))),
+		fmt.Sprintf("📥 %s", inStyle.Render(format.Tokens(s.Context.TotalInputTokens))),
 	)
 
 	// Output tokens - Emerald/Green (outgoing data)
 	outStyle := style.GetRenderer().NewStyle().Foreground(style.ColorOutput)
 	details = append(details,
-		fmt.Sprintf("📤 %s", outStyle.Render(formatTokens(s.Context.TotalOutputTokens))),
+		fmt.Sprintf("📤 %s", outStyle.Render(format.Tokens(s.Context.TotalOutputTokens))),
 	)
 
 	// Cache stats if available - Different colors for Read vs Write
@@ -69,9 +54,9 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 
 		details = append(details,
 			fmt.Sprintf("💾 %s%s%s",
-				cacheReadStyle.Render("R:"+formatTokens(s.Context.CacheReadTokens)),
+				cacheReadStyle.Render("R:"+format.Tokens(s.Context.CacheReadTokens)),
 				style.GetRenderer().NewStyle().Foreground(style.ColorMuted).Render("/"),
-				cacheWriteStyle.Render("W:"+formatTokens(s.Context.CacheCreateTokens)),
+				cacheWriteStyle.Render("W:"+format.Tokens(s.Context.CacheCreateTokens)),
 			),
 		)
 	}
@@ -79,7 +64,7 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 	// Total context size - Muted gray (static constant)
 	totalStyle := style.GetRenderer().NewStyle().Foreground(style.ColorMuted)
 	details = append(details,
-		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),
+		fmt.Sprintf("⚡ %s", totalStyle.Render(format.Tokens(s.Context.TotalTokens))),
 	)
 
 	// Single line format for use in custom layouts

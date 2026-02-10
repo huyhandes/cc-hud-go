@@ -36,7 +36,7 @@ func GetAccessToken() (string, error) {
 		cmd = exec.Command("secret-tool", "lookup", "service", "Claude Code-credentials")
 	case "windows":
 		// Windows: not yet supported
-		return "", fmt.Errorf("Windows keychain access not yet implemented")
+		return "", fmt.Errorf("windows keychain access not yet implemented")
 	default:
 		return "", fmt.Errorf("unsupported operating system: %s", runtime.GOOS)
 	}
@@ -102,7 +102,7 @@ func FetchUsage() (*UsageResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch usage: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Check status code
 	if resp.StatusCode != http.StatusOK {

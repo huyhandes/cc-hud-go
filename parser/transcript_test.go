@@ -168,7 +168,6 @@ func TestParseTranscriptLineSkillTrackingMultiple(t *testing.T) {
 }
 
 func TestParseTranscriptLineSkillTrackingFallback(t *testing.T) {
-	// Test fallback for Skill calls without skill name
 	line := `{
 		"type": "assistant",
 		"message": {
@@ -187,13 +186,125 @@ func TestParseTranscriptLineSkillTrackingFallback(t *testing.T) {
 		t.Fatalf("ParseTranscriptLine failed: %v", err)
 	}
 
-	// Verify it fell back to generic "Skill" in AppTools
 	if s.Tools.AppTools["Skill"] != 1 {
 		t.Errorf("Expected generic 'Skill' count 1, got %d", s.Tools.AppTools["Skill"])
 	}
 
-	// Verify no skills were tracked in Skills map
 	if len(s.Tools.Skills) != 0 {
 		t.Errorf("Expected no skills tracked, got %d", len(s.Tools.Skills))
+	}
+}
+
+func TestParseTranscriptLineInvalidJSON(t *testing.T) {
+	s := state.New()
+	err := ParseTranscriptLine([]byte(`not json`), s)
+	if err == nil {
+		t.Error("expected error for invalid JSON")
+	}
+}
+
+func TestParseTranscriptLineNoToolUse(t *testing.T) {
+	line := `{"type":"text","name":"test"}`
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	total := len(s.Tools.AppTools) + len(s.Tools.InternalTools) + len(s.Tools.CustomTools)
+	if total != 0 {
+		t.Error("expected no tools tracked for non-tool_use type")
+	}
+}
+
+func TestParseTranscriptLineMCPMalformed(t *testing.T) {
+	// MCP tool with < 3 parts should not panic
+	line := `{"type":"tool_use","name":"mcp__short"}`
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(s.Tools.MCPTools) != 0 {
+		t.Error("malformed MCP name should not create MCP tool entries")
+	}
+}
+
+func TestParseTranscriptLineMessageWithMCP(t *testing.T) {
+	// MCP tool in message.content (not top-level)
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "mcp__server__toolA"
+			}]
+		}
+	}`
+
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	found := false
+	for server, tools := range s.Tools.MCPTools {
+		if server.Name == "server" && tools["toolA"] == 1 {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected MCP tool from message content to be tracked")
+	}
+}
+
+func TestParseTranscriptLineMessageWithMCPMalformed(t *testing.T) {
+	// MCP tool in message.content with < 3 parts
+	line := `{
+		"type": "assistant",
+		"message": {
+			"content": [{
+				"type": "tool_use",
+				"name": "mcp__short"
+			}]
+		}
+	}`
+
+	s := state.New()
+	err := ParseTranscriptLine([]byte(line), s)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(s.Tools.MCPTools) != 0 {
+		t.Error("malformed MCP in message should not create entries")
+	}
+}
+
+func TestCategorizeTool_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		toolName string
+		want     ToolCategory
+	}{
+		{"empty string", "", CategoryCustom},
+		{"uppercase Read", "READ", CategoryApp},
+		{"mixed case Bash", "bAsH", CategoryInternal},
+		{"MCP prefix only", "mcp__", CategoryMCP},
+		{"Skill uppercase", "SKILL", CategorySkill},
+		{"WebFetch", "WebFetch", CategoryApp},
+		{"WebSearch", "WebSearch", CategoryApp},
+		{"Task", "Task", CategoryApp},
+		{"unknown tool", "FooBar", CategoryCustom},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CategorizeTool(tt.toolName)
+			if got != tt.want {
+				t.Errorf("CategorizeTool(%q) = %v, want %v", tt.toolName, got, tt.want)
+			}
+		})
 	}
 }

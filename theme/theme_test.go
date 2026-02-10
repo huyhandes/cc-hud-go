@@ -75,36 +75,80 @@ func TestAllCatppuccinFlavors(t *testing.T) {
 }
 
 func TestLoadFromConfig(t *testing.T) {
-	// Mock config structure
-	type Config struct {
-		Theme  string
-		Colors map[string]string
-	}
+	wrapper := LoadThemeFromConfig("mocha", map[string]string{"success": "#00ff00"})
 
-	cfg := Config{
-		Theme: "mocha",
-		Colors: map[string]string{
-			"success": "#00ff00",
-		},
-	}
-
-	// Create a theme wrapper that can apply overrides
-	wrapper := LoadThemeFromConfig(cfg.Theme, cfg.Colors)
-
-	// Check base theme
 	if wrapper.Name() != "mocha" {
 		t.Errorf("Expected theme 'mocha', got %s", wrapper.Name())
 	}
 
-	// Check override applied
 	successColor := wrapper.GetColor("success")
 	if string(successColor) != "#00ff00" {
 		t.Errorf("Expected override color #00ff00, got %s", successColor)
 	}
 
-	// Check non-overridden color uses theme default
 	warningColor := wrapper.GetColor("warning")
 	if warningColor == lipgloss.Color("") {
 		t.Error("Expected warning color from theme")
+	}
+}
+
+func TestLoadFromConfigNoOverrides(t *testing.T) {
+	th := LoadThemeFromConfig("frappe", nil)
+
+	if th.Name() != "frappe" {
+		t.Errorf("expected 'frappe', got %s", th.Name())
+	}
+
+	// Should be the base theme directly (not a wrapper)
+	if _, ok := th.(*ThemeWrapper); ok {
+		t.Error("expected base theme, not wrapper, when no overrides")
+	}
+}
+
+func TestLoadFromConfigEmptyOverrides(t *testing.T) {
+	th := LoadThemeFromConfig("latte", map[string]string{})
+
+	if th.Name() != "latte" {
+		t.Errorf("expected 'latte', got %s", th.Name())
+	}
+
+	if _, ok := th.(*ThemeWrapper); ok {
+		t.Error("expected base theme with empty overrides map")
+	}
+}
+
+func TestAllSemanticColorsExist(t *testing.T) {
+	semantics := []string{
+		"success", "warning", "danger", "input", "output",
+		"cacheRead", "cacheWrite", "primary", "highlight",
+		"accent", "muted", "bright", "info",
+	}
+
+	for _, flavor := range []string{"macchiato", "mocha", "frappe", "latte"} {
+		th := GetTheme(flavor)
+		for _, key := range semantics {
+			color := th.GetColor(key)
+			if color == lipgloss.Color("") {
+				t.Errorf("%s: missing color for %q", flavor, key)
+			}
+		}
+	}
+}
+
+func TestThemeWrapperOverrideFallback(t *testing.T) {
+	wrapper := &ThemeWrapper{
+		base:      NewMacchiato(),
+		overrides: map[string]string{"custom_key": "#123456"},
+	}
+
+	// Override hit
+	if string(wrapper.GetColor("custom_key")) != "#123456" {
+		t.Error("expected override color")
+	}
+
+	// Base fallback
+	baseColor := NewMacchiato().GetColor("success")
+	if wrapper.GetColor("success") != baseColor {
+		t.Error("expected base theme color for non-overridden key")
 	}
 }
