@@ -82,10 +82,10 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 		fmt.Sprintf("⚡ %s", totalStyle.Render(formatTokens(s.Context.TotalTokens))),
 	)
 
-	// Multi-line format: bar on first line, details on second line
-	return fmt.Sprintf("%s %s\n  %s",
+	// Single line format for use in custom layouts
+	return fmt.Sprintf("%s %s %s",
 		bar,
 		percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage)),
-		strings.Join(details, "  "),
+		strings.Join(details, " "),
 	), nil
 }
