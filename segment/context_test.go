@@ -58,3 +58,35 @@ func TestContextSegment(t *testing.T) {
 		t.Errorf("expected percentage in output, got '%s'", output)
 	}
 }
+
+func TestContextSegmentUsesGradientBar(t *testing.T) {
+	// Setup
+	s := state.New()
+	s.Context.UsedTokens = 54000
+	s.Context.TotalTokens = 100000
+	s.UpdateDerived()
+
+	cfg := config.Default()
+
+	seg := &ContextSegment{}
+	result, err := seg.Render(s, cfg)
+
+	if err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
+
+	// Should contain gradient bar characters, not dots
+	if strings.Contains(result, "●") || strings.Contains(result, "○") {
+		t.Error("Expected gradient bar, found old dot characters")
+	}
+
+	// Should contain gradient characters
+	hasGradient := strings.Contains(result, "█") ||
+	               strings.Contains(result, "▓") ||
+	               strings.Contains(result, "▒") ||
+	               strings.Contains(result, "░")
+
+	if !hasGradient {
+		t.Error("Expected gradient bar characters (█▓▒░)")
+	}
+}
