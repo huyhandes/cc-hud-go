@@ -6,7 +6,6 @@ import (
 	"github.com/huybui/cc-hud-go/config"
 	"github.com/huybui/cc-hud-go/segment"
 	"github.com/huybui/cc-hud-go/state"
-	"github.com/huybui/cc-hud-go/style"
 )
 
 // Render generates plain text output for the statusline
@@ -45,13 +44,10 @@ func renderSingleLine(s *state.State, cfg *config.Config) (string, error) {
 		parts = append(parts, text)
 	}
 
-	separator := style.Separator()
-	return strings.Join(parts, " "+separator+" "), nil
+	return joinSegments(parts), nil
 }
 
 func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
-	separator := style.Separator()
-
 	// Line 1: Model and Context (most important)
 	line1Parts := []string{}
 	for _, seg := range segment.All() {
@@ -115,17 +111,30 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	// Build output
 	var lines []string
 	if len(line1Parts) > 0 {
-		lines = append(lines, strings.Join(line1Parts, " "+separator+" "))
+		lines = append(lines, joinSegments(line1Parts))
 	}
 	if len(line2Parts) > 0 {
-		lines = append(lines, strings.Join(line2Parts, " "+separator+" "))
+		lines = append(lines, joinSegments(line2Parts))
 	}
 	if len(line3Parts) > 0 {
-		lines = append(lines, strings.Join(line3Parts, " "+separator+" "))
+		lines = append(lines, joinSegments(line3Parts))
 	}
 	if len(line4Parts) > 0 {
-		lines = append(lines, strings.Join(line4Parts, " "+separator+" "))
+		lines = append(lines, joinSegments(line4Parts))
 	}
 
 	return strings.Join(lines, "\n"), nil
+}
+
+// joinSegments joins segment outputs with two-space separators
+func joinSegments(segments []string) string {
+	// Filter out empty segments
+	nonEmpty := make([]string, 0, len(segments))
+	for _, seg := range segments {
+		if strings.TrimSpace(seg) != "" {
+			nonEmpty = append(nonEmpty, seg)
+		}
+	}
+
+	return strings.Join(nonEmpty, "  │  ")
 }
