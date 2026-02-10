@@ -121,20 +121,28 @@ cc-hud-go features beautiful [Catppuccin](https://github.com/catppuccin/catppucc
 
 **Gradient Progress Bars** - Smooth color transitions using Unicode block characters:
 ```
-Context: 🧠 █▓▒░░░░░░░ 35%   ← Green (healthy)
-Context: 🧠 █▓▓▓▒▒▒░░░ 75%   ← Yellow (warning)
-Context: 🧠 █▓▓▓▓▓▒▒▒░ 95%   ← Red (danger)
+█▓▒░░░░░░░ 35% 📥 89k 📤 12k   ← Green (healthy)
+█▓▓▓▒▒▒░░░ 75% 📥 150k 📤 25k  ← Yellow (warning)
+█▓▓▓▓▓▒▒▒░ 95% 📥 190k 📤 38k  ← Red (danger)
 ```
 
-**Smart Adaptive Layouts** - Automatic switching between inline and table views:
-- Below threshold: Compact inline display with icons
-- Above threshold: Detailed table view with sortable data
-- Configurable thresholds per segment type
+**Multi-line Layout** - Clean 4-line display grouping related metrics:
+```
+Line 1: 🤖 Sonnet 4.5 │ █▓▒▒░░░░░░ 59%
+Line 2: 📥 89k 📤 12k 💾 R:45k/W:23k ⚡ 200k │ 💰$0.0234  │  ⏱ 2m34s
+Line 3: 🌿 main (dirty:2) │ 📝 +45/-12
+Line 4: ╭─ 📦 App 23  🔌 MCP 2  ⚡ Skills 1 ─╮
+```
 
-**Enhanced Spacing** - Clean separators for better readability:
-```
-Model │ Context │ Git │ Cost
-```
+**Smart Adaptive Layouts** - Automatic switching between inline lipgloss boxes and table views:
+- Below threshold: Compact inline display with styled boxes (╭╮╰╯)
+- Above threshold: Detailed table view with box-drawing characters (┌┬┐)
+- Configurable thresholds per segment type (default: 999 for lipgloss boxes)
+
+**Semantic Colors** - Each element uses meaningful color associations:
+- Input tokens: Blue 📥 | Output tokens: Emerald 📤
+- Cache reads: Purple 💾 | Cache writes: Pink
+- Success: Green | Warning: Yellow | Danger: Red
 
 ### Custom Colors
 
@@ -270,8 +278,8 @@ Create `~/.claude/cc-hud-go/config.json`:
     "showMCP": true
   },
   "tables": {
-    "toolsTableThreshold": 5,
-    "tasksTableThreshold": 3,
+    "toolsTableThreshold": 999,
+    "tasksTableThreshold": 999,
     "contextTableThreshold": 999
   }
 }
@@ -342,16 +350,20 @@ All boolean flags to enable/disable segments:
 
 #### Table Options
 
-Smart adaptive rendering thresholds (switches from inline to table view):
+Smart adaptive rendering thresholds (switches from inline lipgloss boxes to table view):
 
-- `toolsTableThreshold` - Tool count threshold for table view (default: 5)
-- `tasksTableThreshold` - Task count threshold for table view (default: 3)
+- `toolsTableThreshold` - Tool count threshold for table view (default: 999)
+- `tasksTableThreshold` - Task count threshold for table view (default: 999)
 - `contextTableThreshold` - Context size threshold for table view (default: 999)
 
-When the total count exceeds the threshold, the segment automatically switches to a detailed table view with:
+**Default behavior (threshold: 999):** Always use styled lipgloss boxes with colored borders (╭╮╰╯)
+
+**Table view (when count > threshold):** Switch to plain table format with box-drawing characters (┌┬┐) featuring:
 - Sortable columns
 - Filtered display (e.g., last 3 completed tasks)
 - Truncated long names for better readability
+
+Lower thresholds (e.g., 5 or 3) to switch to table view earlier for very large datasets.
 
 ## Architecture
 
