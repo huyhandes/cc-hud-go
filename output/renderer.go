@@ -110,7 +110,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line2))
 	}
 
-	// Line 3: Git | File changes
+	// Line 3: Git | File changes | Tasks
 	line3 := []string{}
 	if text := renderSeg("git"); text != "" {
 		line3 = append(line3, text)
@@ -118,12 +118,15 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
 		line3 = append(line3, renderFileChanges(s))
 	}
+	if text := renderSeg("tasks"); text != "" {
+		line3 = append(line3, text)
+	}
 	if len(line3) > 0 {
 		lines = append(lines, joinSegments(line3))
 	}
 
-	// Line 4+: Each tool/task segment on its own line
-	for _, id := range []string{"tools", "tasks", "agent"} {
+	// Line 4+: Each tool/agent segment on its own line
+	for _, id := range []string{"tools", "agent"} {
 		if text := renderSeg(id); text != "" {
 			lines = append(lines, text)
 		}

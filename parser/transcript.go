@@ -29,6 +29,46 @@ type ContentBlock struct {
 	Input map[string]interface{} `json:"input"`
 }
 
+// applyToolUse records a single tool invocation into state.
+// input may be nil when parsing top-level tool_use lines (no input available).
+func applyToolUse(s *state.State, name string, input map[string]interface{}) {
+	category := CategorizeTool(name)
+	switch category {
+	case CategoryApp:
+		s.Tools.AppTools[name]++
+		s.Tools.LastUsed["app"] = name
+	case CategoryInternal:
+		s.Tools.InternalTools[name]++
+		s.Tools.LastUsed["internal"] = name
+	case CategoryCustom:
+		s.Tools.CustomTools[name]++
+		s.Tools.LastUsed["custom"] = name
+	case CategoryMCP:
+		parts := strings.Split(name, "__")
+		if len(parts) >= 3 {
+			server := state.MCPServer{Name: parts[1], Type: "mcp"}
+			if s.Tools.MCPTools[server] == nil {
+				s.Tools.MCPTools[server] = make(map[string]int)
+			}
+			toolName := strings.Join(parts[2:], "__")
+			s.Tools.MCPTools[server][toolName]++
+			s.Tools.LastUsed["mcp"] = parts[1] + "/" + toolName
+		}
+	case CategorySkill:
+		if input != nil {
+			if skillName, ok := input["skill"].(string); ok && skillName != "" {
+				usage := s.Tools.Skills[skillName]
+				usage.Count++
+				s.Tools.Skills[skillName] = usage
+				s.Tools.LastUsed["skills"] = skillName
+				return
+			}
+		}
+		s.Tools.AppTools["Skill"]++
+		s.Tools.LastUsed["app"] = "Skill"
+	}
+}
+
 // ParseTranscriptLine parses a single JSONL line and updates state
 func ParseTranscriptLine(data []byte, s *state.State) error {
 	return ParseTranscriptLineWithTracker(data, s, nil)
@@ -47,37 +87,7 @@ func ParseTranscriptLineWithTracker(data []byte, s *state.State, tracker *TaskTr
 				if tracker != nil && (block.Name == "TodoWrite" || block.Name == "TaskCreate" || block.Name == "TaskUpdate") {
 					processTaskTool(block, tracker)
 				}
-
-				category := CategorizeTool(block.Name)
-				switch category {
-				case CategoryApp:
-					s.Tools.AppTools[block.Name]++
-				case CategoryInternal:
-					s.Tools.InternalTools[block.Name]++
-				case CategoryCustom:
-					s.Tools.CustomTools[block.Name]++
-				case CategoryMCP:
-					parts := strings.Split(block.Name, "__")
-					if len(parts) >= 3 {
-						server := state.MCPServer{
-							Name: parts[1],
-							Type: "mcp",
-						}
-						if s.Tools.MCPTools[server] == nil {
-							s.Tools.MCPTools[server] = make(map[string]int)
-						}
-						toolName := strings.Join(parts[2:], "__")
-						s.Tools.MCPTools[server][toolName]++
-					}
-				case CategorySkill:
-					if skillName, ok := block.Input["skill"].(string); ok && skillName != "" {
-						usage := s.Tools.Skills[skillName]
-						usage.Count++
-						s.Tools.Skills[skillName] = usage
-					} else {
-						s.Tools.AppTools["Skill"]++
-					}
-				}
+				applyToolUse(s, block.Name, block.Input)
 			}
 		}
 		return nil
@@ -87,32 +97,7 @@ func ParseTranscriptLineWithTracker(data []byte, s *state.State, tracker *TaskTr
 		return nil
 	}
 
-	category := CategorizeTool(line.Name)
-
-	switch category {
-	case CategoryApp:
-		s.Tools.AppTools[line.Name]++
-	case CategoryInternal:
-		s.Tools.InternalTools[line.Name]++
-	case CategoryCustom:
-		s.Tools.CustomTools[line.Name]++
-	case CategoryMCP:
-		parts := strings.Split(line.Name, "__")
-		if len(parts) >= 3 {
-			server := state.MCPServer{
-				Name: parts[1],
-				Type: "mcp",
-			}
-			if s.Tools.MCPTools[server] == nil {
-				s.Tools.MCPTools[server] = make(map[string]int)
-			}
-			toolName := strings.Join(parts[2:], "__")
-			s.Tools.MCPTools[server][toolName]++
-		}
-	case CategorySkill:
-		s.Tools.AppTools["Skill"]++
-	}
-
+	applyToolUse(s, line.Name, nil)
 	return nil
 }
 

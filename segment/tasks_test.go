@@ -22,86 +22,52 @@ func TestTasksSegment(t *testing.T) {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	// With 5 total tasks and default threshold of 3, should show inline dashboard
-	if !strings.Contains(output, "Tasks Dashboard") {
-		t.Errorf("expected 'Tasks Dashboard' in output, got '%s'", output)
+	if !strings.Contains(output, "⏳") {
+		t.Errorf("expected pending icon in output, got %q", output)
 	}
-
-	// Check for task counts
-	if !strings.Contains(output, "Todo") && !strings.Contains(output, "2") {
-		t.Errorf("expected pending tasks in output, got '%s'", output)
+	if !strings.Contains(output, "🔄") {
+		t.Errorf("expected in-progress icon in output, got %q", output)
 	}
-
-	if !strings.Contains(output, "Completed") && !strings.Contains(output, "2") {
-		t.Errorf("expected completed count in output, got '%s'", output)
+	if !strings.Contains(output, "✅") {
+		t.Errorf("expected completed icon in output, got %q", output)
 	}
 }
 
-func TestTasksSegmentTableThreshold(t *testing.T) {
-	// Below threshold - should be inline dashboard
-	s := state.New()
-	s.Tasks.Pending = 1
-	s.Tasks.InProgress = 1
-	s.Tasks.Completed = 1
-
+func TestTasksSegmentZeroTotal(t *testing.T) {
 	cfg := config.Default()
-	cfg.Tables.TasksThreshold = 5
+	s := state.New()
 
 	seg := &TasksSegment{}
-	result, err := seg.Render(s, cfg)
-
+	output, err := seg.Render(s, cfg)
 	if err != nil {
-		t.Fatalf("Render failed: %v", err)
+		t.Fatalf("render failed: %v", err)
 	}
-
-	// Should be inline dashboard (no table borders)
-	if strings.Contains(result, "┌") {
-		t.Error("Expected inline dashboard below threshold, got table")
+	if output != "" {
+		t.Errorf("expected empty output for zero tasks, got %q", output)
 	}
+}
 
-	if !strings.Contains(result, "Tasks Dashboard") {
-		t.Error("Expected dashboard format")
-	}
+func TestTasksSegmentSkipsZeroCounts(t *testing.T) {
+	cfg := config.Default()
+	s := state.New()
+	s.Tasks.Completed = 3
 
-	// Above threshold with task details - should be table
-	s.Tasks.Pending = 2
-	s.Tasks.InProgress = 1
-	s.Tasks.Completed = 5
-	s.Tasks.Details = []state.Task{
-		{Subject: "Task 1", Status: "pending"},
-		{Subject: "Task 2", Status: "pending"},
-		{Subject: "Task 3", Status: "in_progress"},
-		{Subject: "Task 4", Status: "completed"},
-		{Subject: "Task 5", Status: "completed"},
-		{Subject: "Task 6", Status: "completed"},
-		{Subject: "Task 7", Status: "completed"},
-		{Subject: "Task 8 with a very long name that should be truncated", Status: "completed"},
-	}
-
-	cfg.Tables.TasksThreshold = 3
-
-	result, err = seg.Render(s, cfg)
+	seg := &TasksSegment{}
+	output, err := seg.Render(s, cfg)
 	if err != nil {
-		t.Fatalf("Render failed: %v", err)
+		t.Fatalf("render failed: %v", err)
 	}
 
-	// Should be table format
-	if !strings.Contains(result, "┌") {
-		t.Error("Expected table format above threshold")
+	if strings.Contains(output, "⏳") {
+		t.Errorf("expected no pending icon when count is 0, got %q", output)
 	}
-
-	// Should contain task subjects
-	if !strings.Contains(result, "Task 1") {
-		t.Error("Expected pending task in table")
+	if strings.Contains(output, "🔄") {
+		t.Errorf("expected no in-progress icon when count is 0, got %q", output)
 	}
-
-	// Should show last 3 completed (tasks 6, 7, 8)
-	if !strings.Contains(result, "Task 6") || !strings.Contains(result, "Task 7") {
-		t.Error("Expected last 3 completed tasks in table")
+	if !strings.Contains(output, "✅") {
+		t.Errorf("expected completed icon in output, got %q", output)
 	}
-
-	// Should not show earlier completed tasks (task 4, 5)
-	if strings.Contains(result, "Task 4") || strings.Contains(result, "Task 5") {
-		t.Error("Should only show last 3 completed tasks")
+	if !strings.Contains(output, "3") {
+		t.Errorf("expected count 3 in output, got %q", output)
 	}
 }

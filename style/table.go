@@ -16,7 +16,7 @@ func RenderTable(headers []string, rows [][]string) string {
 			if row == table.HeaderRow {
 				return renderer.NewStyle().Foreground(ColorBright).Bold(true).Padding(0, 1)
 			}
-			return renderer.NewStyle().Padding(0, 1)
+			return renderer.NewStyle().Foreground(ColorBright).Padding(0, 1)
 		})
 
 	return t.Render()

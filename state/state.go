@@ -58,6 +58,7 @@ type ToolsState struct {
 	CustomTools   map[string]int
 	MCPTools      map[MCPServer]map[string]int
 	Skills        map[string]SkillUsage
+	LastUsed      map[string]string // category key -> last tool/skill name
 }
 
 type MCPServer struct {
@@ -110,6 +111,7 @@ func New() *State {
 			CustomTools:   make(map[string]int),
 			MCPTools:      make(map[MCPServer]map[string]int),
 			Skills:        make(map[string]SkillUsage),
+			LastUsed:      make(map[string]string),
 		},
 		Session: SessionInfo{
 			StartTime: time.Now(),
