@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go 1.24+
+- Go 1.24.2+
 - [Just](https://github.com/casey/just) (task runner)
 - Git
 
@@ -26,8 +26,6 @@ sudo mv cc-hud-go-linux-amd64 /usr/local/bin/cc-hud-go
 # Linux (arm64)
 curl -L https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-linux-arm64.tar.gz | tar xz
 sudo mv cc-hud-go-linux-arm64 /usr/local/bin/cc-hud-go
-
-# Windows (amd64) - download .zip from releases page
 ```
 
 Available: Linux (`amd64`, `arm64`), macOS (`amd64`, `arm64`), Windows (`amd64`, `arm64`)
@@ -52,7 +50,7 @@ go install github.com/huyhandes/cc-hud-go@latest
 |---------|-------------|
 | `just build` | Build with version from git tags |
 | `just install` | Build and install to `~/.local/bin` |
-| `just test` | Run all tests |
+| `just test` | Run all tests (verbose) |
 | `just test-coverage` | Run tests with coverage report |
 | `just check` | Format, vet, and test |
 | `just fmt` | Format code |
@@ -66,6 +64,7 @@ go install github.com/huyhandes/cc-hud-go@latest
 ```bash
 just test                                                         # all tests
 just test-coverage                                                # with coverage report
+# For targeted runs, use go test directly (just test has no arg passthrough):
 go test -run TestModelSegment ./segment                           # specific test
 go test -v ./segment                                              # verbose, one package
 ```
