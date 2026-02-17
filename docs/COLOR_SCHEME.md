@@ -106,3 +106,102 @@ Colors are organized into **semantic groups** where each color has a specific me
 - High contrast ratios for terminal visibility
 - Color meanings reinforced with icons
 - Status indicators use both color AND symbols (🟢🟡🔴)
+
+## Themes
+
+cc-hud-go features beautiful [Catppuccin](https://github.com/catppuccin/catppuccin) color palettes with gradient progress bars and smart adaptive layouts.
+
+### Available Themes
+
+**🌙 Macchiato** (default) - Dark theme with purple accents
+```json
+{ "theme": "macchiato" }
+```
+
+**🌑 Mocha** - Darkest variant with rich, deep colors
+```json
+{ "theme": "mocha" }
+```
+
+**🌆 Frappe** - Medium-dark with warmer tones
+```json
+{ "theme": "frappe" }
+```
+
+**☀️ Latte** - Light theme for bright environments
+```json
+{ "theme": "latte" }
+```
+
+### Custom Colors
+
+Override any semantic color while keeping the base theme:
+
+```json
+{
+  "theme": "macchiato",
+  "colors": {
+    "success": "#00ff00",
+    "warning": "#ffaa00",
+    "danger": "#ff0000",
+    "primary": "#00aaff"
+  }
+}
+```
+
+**Available semantic colors:**
+- `success` - Completed states, positive indicators (green)
+- `warning` - Warnings, medium thresholds (yellow/orange)
+- `danger` - Errors, high thresholds (red)
+- `input` - Input tokens (blue)
+- `output` - Output tokens (emerald)
+- `cacheRead` - Cache read tokens (purple)
+- `cacheWrite` - Cache write tokens (pink)
+- `primary` - Main brand color (purple)
+- `highlight` - Highlights and accents (cyan)
+- `accent` - Secondary accents (orange)
+- `muted` - Borders, subtle elements (gray)
+- `bright` - Bright text (white/cream)
+- `info` - Informational elements (teal)
+
+### Example Configs
+
+Pre-configured examples are available in the [`examples/`](examples/) directory:
+
+```bash
+# Copy Macchiato theme (default)
+cp examples/config-macchiato.json ~/.claude/cc-hud-go/config.json
+
+# Copy Mocha theme (darkest)
+cp examples/config-mocha.json ~/.claude/cc-hud-go/config.json
+
+# Copy custom colors example
+cp examples/config-custom-colors.json ~/.claude/cc-hud-go/config.json
+```
+
+See [`examples/README.md`](examples/README.md) for detailed theme documentation and customization guide.
+
+## Visual Features
+
+**Gradient Progress Bars** - Smooth color transitions using Unicode block characters:
+```
+█▓▒░░░░░░░ 35% 📥 89k 📤 12k   ← Green (healthy)
+█▓▓▓▒▒▒░░░ 75% 📥 150k 📤 25k  ← Yellow (warning)
+█▓▓▓▓▓▒▒▒░ 95% 📥 190k 📤 38k  ← Red (danger)
+```
+
+**Multi-line Layout** - Clean 4-line display grouping related metrics:
+```
+Line 1: 🤖 Sonnet 4.5 │ █▓▒▒░░░░░░ 59%
+Line 2: 📥 89k 📤 12k 💾 R:45k/W:23k ⚡ 200k │ 💰$0.0234  │  ⏱ 2m34s
+Line 3: 🌿 main (dirty:2) │ 📝 +45/-12
+Line 4: ╭─ 📦 App 23  🔌 MCP 2  ⚡ Skills 1 ─╮
+```
+
+## Smart Adaptive Layouts
+
+Automatic switching between inline lipgloss boxes and table views based on configurable thresholds:
+
+- Below threshold: Compact inline display with styled boxes (╭╮╰╯)
+- Above threshold: Detailed table view with box-drawing characters (┌┬┐)
+- Configurable thresholds per segment type (default: 999 for lipgloss boxes)
