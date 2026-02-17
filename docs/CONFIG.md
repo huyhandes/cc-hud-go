@@ -59,7 +59,7 @@ Config file location: `~/.claude/cc-hud-go/config.json`
 | Preset | Description |
 |--------|-------------|
 | `full` | All segments enabled |
-| `essential` | Core metrics only (model, context, git, cost); switches to compact layout |
+| `essential` | Core metrics only (model, context, git, tasks); tools/agents/rateLimits/duration hidden; compact layout |
 | `minimal` | Minimal info (model, context); compact layout, git/tools/agents/tasks/rateLimits/duration hidden |
 
 ## Display Options
