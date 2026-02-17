@@ -175,6 +175,12 @@ cp examples/config-macchiato.json ~/.claude/cc-hud-go/config.json
 # Copy Mocha theme (darkest)
 cp examples/config-mocha.json ~/.claude/cc-hud-go/config.json
 
+# Copy Frappe theme (medium-dark)
+cp examples/config-frappe.json ~/.claude/cc-hud-go/config.json
+
+# Copy Latte theme (light)
+cp examples/config-latte.json ~/.claude/cc-hud-go/config.json
+
 # Copy custom colors example
 cp examples/config-custom-colors.json ~/.claude/cc-hud-go/config.json
 ```
