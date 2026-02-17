@@ -69,10 +69,6 @@ just test
 # Run tests with coverage
 just test-coverage
 
-# Using go directly
-go test ./...
-go test -cover ./...
-
 # Run a specific test
 go test -run TestName ./path/to/package
 
@@ -93,11 +89,6 @@ just lint
 
 # Run all checks (format, vet, test)
 just check
-
-# Manual commands
-go fmt ./...
-go vet ./...
-golangci-lint run
 ```
 
 **Dependencies:**
@@ -110,6 +101,15 @@ go get -u ./...
 
 # Tidy dependencies
 go mod tidy
+```
+
+## Workflow
+
+After finishing any task, always run:
+
+```bash
+just fmt
+just lint
 ```
 
 ## Architecture
