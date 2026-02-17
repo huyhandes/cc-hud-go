@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Documentation restructure**: README shortened to quick-start guide; detailed content extracted to `docs/BUILD_GUIDE.md`, `docs/CONFIG.md`, `docs/COLOR_SCHEME.md` (updated), `docs/CODEMAP.md` (updated)
+- **CLAUDE.md**: Added mandatory `just fmt` + `just lint` workflow after each task; removed redundant bare `go` command examples
+
 ## [0.2.0] - 2026-02-10
 
 ### Added
@@ -34,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unused `currentTheme` variable in style package
 - Traffic light icon (🟢🟡🔴) from context segment
 
-## [0.1.0] - 2025-01-XX
+## [0.1.0] - 2025-01-01
 
 ### Added
 - Initial release of cc-hud-go
