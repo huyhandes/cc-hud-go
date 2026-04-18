@@ -16,6 +16,7 @@ type Segment interface {
 func All() []Segment {
 	return []Segment{
 		&ModelSegment{},
+		&CavemanSegment{},
 		&ContextSegment{},
 		&GitSegment{},
 		&CostSegment{},

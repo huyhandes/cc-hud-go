@@ -73,3 +73,53 @@ func lerp(start, end uint8, t float64) uint8 {
 func formatRGB(r, g, b uint8) string {
 	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
+
+// RenderContextBar renders a context-usage bar using absolute token thresholds.
+// Bar fill maps to used/total. Color zones (independent of total):
+//
+//	chill green < 150k, orange 150-175k, red 175-230k, ULTRA RED >= 230k.
+func RenderContextBar(usedTokens, totalTokens, width int) string {
+	if width <= 0 {
+		width = 10
+	}
+	if totalTokens <= 0 {
+		return strings.Repeat(" ", width)
+	}
+	if usedTokens < 0 {
+		usedTokens = 0
+	}
+	if usedTokens > totalTokens {
+		usedTokens = totalTokens
+	}
+
+	filled := int(float64(usedTokens) / float64(totalTokens) * float64(width))
+	if filled > width {
+		filled = width
+	}
+
+	tokensPerCell := float64(totalTokens) / float64(width)
+	segments := make([]string, 0, width)
+	for i := 0; i < width; i++ {
+		if i < filled {
+			cellTokens := int(float64(i+1) * tokensPerCell)
+			color := contextZoneColor(cellTokens)
+			segments = append(segments, renderer.NewStyle().Foreground(color).Render("█"))
+		} else {
+			segments = append(segments, renderer.NewStyle().Foreground(ColorMuted).Render("░"))
+		}
+	}
+	return strings.Join(segments, "")
+}
+
+func contextZoneColor(tokens int) lipgloss.Color {
+	switch {
+	case tokens >= 230_000:
+		return lipgloss.Color("#ff0000")
+	case tokens >= 175_000:
+		return ColorDanger
+	case tokens >= 150_000:
+		return ColorWarning
+	default:
+		return ColorSuccess
+	}
+}

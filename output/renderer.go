@@ -78,6 +78,9 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if modelAndContext != "" {
 		line1 = append(line1, modelAndContext)
 	}
+	if text := renderSeg("caveman"); text != "" {
+		line1 = append(line1, text)
+	}
 
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
@@ -143,15 +146,9 @@ func renderContextSize(s *state.State) string {
 
 // renderContextBar renders just the progress bar and percentage
 func renderContextBar(s *state.State) string {
-	percentage := s.Context.Percentage
-
-	// Use style package's gradient bar which has colors
-	bar := style.RenderGradientBar(percentage, 10)
-
-	percentageStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(percentage))
-	percentageText := percentageStyle.Render(fmt.Sprintf("%.0f%%", percentage))
-
-	return fmt.Sprintf("🧠 %s %s", bar, percentageText)
+	bar := style.RenderContextBar(s.Context.UsedTokens, s.Context.TotalTokens, 10)
+	pctStyle := style.GetRenderer().NewStyle().Foreground(style.ContextTokenColor(s.Context.UsedTokens))
+	return fmt.Sprintf("🧠 %s %s", bar, pctStyle.Render(fmt.Sprintf("%.0f%%", s.Context.Percentage)))
 }
 
 // renderIOTokens renders input/output token counts

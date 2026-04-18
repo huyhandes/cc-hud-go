@@ -100,3 +100,19 @@ func ThresholdColor(percentage float64) lipgloss.Color {
 	}
 	return ColorSuccess
 }
+
+// ContextTokenColor returns a color for absolute token usage.
+// Thresholds tuned for context cliff: green < 150k, warn 150-175k,
+// red 175-230k, critical >= 230k.
+func ContextTokenColor(tokens int) lipgloss.Color {
+	switch {
+	case tokens >= 230_000:
+		return lipgloss.Color("#ff0000") // CRITICAL
+	case tokens >= 175_000:
+		return ColorDanger
+	case tokens >= 150_000:
+		return ColorWarning
+	default:
+		return ColorSuccess
+	}
+}

@@ -27,10 +27,10 @@ func (c *ContextSegment) Render(s *state.State, cfg *config.Config) (string, err
 
 	percentage := s.Context.Percentage
 
-	// Build gradient progress bar
-	bar := style.RenderGradientBar(percentage, 10)
-
-	percentageStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(percentage))
+	// 1M-context models (Opus 4.6/4.7) need absolute-token coloring;
+	// 200k cliff lands at 20% on a 1M window, so % thresholds mislead.
+	bar := style.RenderContextBar(s.Context.UsedTokens, s.Context.TotalTokens, 10)
+	percentageStyle := style.GetRenderer().NewStyle().Foreground(style.ContextTokenColor(s.Context.UsedTokens))
 
 	// Detailed token breakdown with semantic colors
 	details := []string{}

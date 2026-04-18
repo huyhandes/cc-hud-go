@@ -2,8 +2,14 @@ package format
 
 import "fmt"
 
-// Tokens formats a token count for display (e.g. 5000 → "5k", 200000 → "200k", 500 → "500")
+// Tokens formats a token count for display (e.g. 5000 → "5k", 200000 → "200k", 1_000_000 → "1M")
 func Tokens(tokens int) string {
+	if tokens >= 1_000_000 {
+		if tokens%1_000_000 == 0 {
+			return fmt.Sprintf("%dM", tokens/1_000_000)
+		}
+		return fmt.Sprintf("%.1fM", float64(tokens)/1_000_000)
+	}
 	if tokens >= 1000 {
 		return fmt.Sprintf("%dk", tokens/1000)
 	}

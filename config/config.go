@@ -31,6 +31,7 @@ type DisplayConfig struct {
 	RateLimits bool
 	Duration   bool
 	FetchOAuth bool
+	Caveman    bool
 }
 
 type GitConfig struct {
@@ -72,6 +73,7 @@ func Default() *Config {
 			RateLimits: true,
 			Duration:   true,
 			FetchOAuth: true,
+			Caveman:    true,
 		},
 		Git: GitConfig{
 			ShowBranch:      true,
