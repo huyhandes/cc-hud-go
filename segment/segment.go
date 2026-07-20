@@ -17,6 +17,7 @@ func All() []Segment {
 	return []Segment{
 		&ModelSegment{},
 		&CavemanSegment{},
+		&PonytailSegment{},
 		&ContextSegment{},
 		&GitSegment{},
 		&CostSegment{},

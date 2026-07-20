@@ -32,6 +32,7 @@ type DisplayConfig struct {
 	Duration   bool
 	FetchOAuth bool
 	Caveman    bool
+	Ponytail   bool
 }
 
 type GitConfig struct {
@@ -74,6 +75,7 @@ func Default() *Config {
 			Duration:   true,
 			FetchOAuth: true,
 			Caveman:    true,
+			Ponytail:   true,
 		},
 		Git: GitConfig{
 			ShowBranch:      true,
