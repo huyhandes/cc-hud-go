@@ -1,6 +1,6 @@
 module github.com/huyhandes/cc-hud-go
 
-go 1.24.2
+go 1.26
 
 require (
 	github.com/charmbracelet/lipgloss v1.1.0
