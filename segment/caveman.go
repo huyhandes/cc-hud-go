@@ -21,9 +21,16 @@ func (c *CavemanSegment) Enabled(cfg *config.Config) bool {
 }
 
 func (c *CavemanSegment) Render(_ *state.State, _ *config.Config) (string, error) {
-	level := readCavemanLevel()
+	return renderModeBadge(".caveman-active", "🦴", "CAVEMAN"), nil
+}
+
+// renderModeBadge renders an "emoji LABEL:LEVEL" badge from a flag file under
+// the Claude config dir. Returns "" when the file is absent, unreadable, or
+// holds an unrecognized level.
+func renderModeBadge(flagFile, emoji, label string) string {
+	level := readModeLevel(flagFile)
 	if level == "" {
-		return "", nil
+		return ""
 	}
 
 	var color lipgloss.Color
@@ -34,21 +41,18 @@ func (c *CavemanSegment) Render(_ *state.State, _ *config.Config) (string, error
 		color = style.ColorWarning
 	case "lite":
 		color = style.ColorInfo
-	default:
-		color = style.ColorMuted
 	}
 
 	badge := style.GetRenderer().NewStyle().Foreground(color).Bold(true).
-		Render(fmt.Sprintf("CAVEMAN:%s", strings.ToUpper(level)))
-	return "🦴 " + badge, nil
+		Render(fmt.Sprintf("%s:%s", label, strings.ToUpper(level)))
+	return emoji + " " + badge
 }
 
-func readCavemanLevel() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	data, err := os.ReadFile(filepath.Join(home, ".claude", ".caveman-active"))
+// readModeLevel reads a canonical mode level from flagFile under the Claude
+// config dir. Empty string for any non-canonical value.
+func readModeLevel(flagFile string) string {
+	dir := claudeConfigDir()
+	data, err := os.ReadFile(filepath.Join(dir, flagFile))
 	if err != nil {
 		return ""
 	}
@@ -58,4 +62,20 @@ func readCavemanLevel() string {
 		return level
 	}
 	return ""
+}
+
+// claudeConfigDir resolves the Claude config directory.
+//
+// ponytail: CLAUDE_CONFIG_DIR is honored (not just $HOME/.claude) so this
+// segment and ponytail's own statusline script read state from the same
+// place — they can never disagree about where the flag file lives.
+func claudeConfigDir() string {
+	if dir := os.Getenv("CLAUDE_CONFIG_DIR"); dir != "" {
+		return dir
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".claude")
 }
