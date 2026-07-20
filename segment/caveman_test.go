@@ -147,16 +147,10 @@ func TestRenderModeBadgeConfigDirOverride(t *testing.T) {
 
 // TestClaudeConfigDirUnsetFallback verifies that with CLAUDE_CONFIG_DIR unset,
 // claudeConfigDir() returns $HOME/.claude exactly (default behavior preserved).
+// Setting the env var to "" is equivalent to unsetting it: claudeConfigDir
+// treats empty the same as absent (dir != "" check), and t.Setenv auto-restores.
 func TestClaudeConfigDirUnsetFallback(t *testing.T) {
-	prev, hadPrev := os.LookupEnv("CLAUDE_CONFIG_DIR")
-	os.Unsetenv("CLAUDE_CONFIG_DIR")
-	t.Cleanup(func() {
-		if hadPrev {
-			_ = os.Setenv("CLAUDE_CONFIG_DIR", prev)
-		} else {
-			_ = os.Unsetenv("CLAUDE_CONFIG_DIR")
-		}
-	})
+	t.Setenv("CLAUDE_CONFIG_DIR", "")
 
 	home, err := os.UserHomeDir()
 	if err != nil {
