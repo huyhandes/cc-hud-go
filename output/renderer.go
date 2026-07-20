@@ -78,12 +78,6 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if modelAndContext != "" {
 		line1 = append(line1, modelAndContext)
 	}
-	if text := renderSeg("caveman"); text != "" {
-		line1 = append(line1, text)
-	}
-	if text := renderSeg("ponytail"); text != "" {
-		line1 = append(line1, text)
-	}
 
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
@@ -98,8 +92,14 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line1))
 	}
 
-	// Line 2: Input/Output | Cache Read/Write | Cost | Time
+	// Line 2: Caveman | Ponytail | Input/Output | Cache Read/Write | Cost | Time
 	line2 := []string{}
+	if text := renderSeg("caveman"); text != "" {
+		line2 = append(line2, text)
+	}
+	if text := renderSeg("ponytail"); text != "" {
+		line2 = append(line2, text)
+	}
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line2 = append(line2, renderIOTokens(s))
 		if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
