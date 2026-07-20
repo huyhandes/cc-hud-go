@@ -81,6 +81,9 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if text := renderSeg("caveman"); text != "" {
 		line1 = append(line1, text)
 	}
+	if text := renderSeg("ponytail"); text != "" {
+		line1 = append(line1, text)
+	}
 
 	if cfg.Display.Context && s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))

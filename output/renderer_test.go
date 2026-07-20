@@ -1,6 +1,8 @@
 package output
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -132,6 +134,38 @@ func TestRenderMultiLineExpanded(t *testing.T) {
 
 	if !strings.Contains(output, "Sonnet") {
 		t.Error("expected model name in expanded layout")
+	}
+}
+
+// TestRenderMultiLineModeBadges is a regression test: the expanded/multiline
+// layout hardcodes line 1 by segment ID, so a newly-registered mode segment
+// (caveman, ponytail) will NOT appear just by being in segment.All() — the
+// renderer must call renderSeg for it explicitly. This test fails if either
+// mode badge is wired into the registry but forgotten in renderMultiLine.
+func TestRenderMultiLineModeBadges(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("CLAUDE_CONFIG_DIR", dir)
+	for _, f := range []string{".caveman-active", ".ponytail-active"} {
+		if err := os.WriteFile(filepath.Join(dir, f), []byte("ultra"), 0o644); err != nil {
+			t.Fatalf("write %s: %v", f, err)
+		}
+	}
+
+	cfg := config.Default()
+	cfg.LineLayout = "expanded"
+	s := state.New()
+	s.Model.Name = "Test"
+
+	output, err := Render(s, cfg)
+	if err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+
+	if !strings.Contains(output, "CAVEMAN:ULTRA") {
+		t.Errorf("expected CAVEMAN:ULTRA badge in expanded layout, got: %s", output)
+	}
+	if !strings.Contains(output, "PONYTAIL:ULTRA") {
+		t.Errorf("expected PONYTAIL:ULTRA badge in expanded layout, got: %s", output)
 	}
 }
 
