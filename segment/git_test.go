@@ -4,12 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestGitSegment(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.Git.Branch = "main"
 	s.Git.DirtyFiles = 3
@@ -22,7 +20,7 @@ func TestGitSegment(t *testing.T) {
 		t.Errorf("expected ID 'git', got '%s'", seg.ID())
 	}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -37,12 +35,11 @@ func TestGitSegment(t *testing.T) {
 }
 
 func TestGitSegmentNoBranch(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
 	seg := &GitSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}

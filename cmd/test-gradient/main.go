@@ -3,16 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/style"
 	"github.com/huyhandes/cc-hud-go/theme"
 )
 
 func main() {
 	// Initialize style system
-	cfg := config.Default()
-	themeInstance := theme.LoadThemeFromConfig(cfg.Theme, cfg.Colors)
-	style.Init(themeInstance)
+	style.Init(theme.GetTheme("macchiato"))
 
 	fmt.Println("Static Gradient Progress Bar Test")
 	fmt.Println("===================================")
@@ -29,6 +26,6 @@ func main() {
 	fmt.Println("Notice how the gradient transitions:")
 	fmt.Println("  0-50%:  Green → Yellow")
 	fmt.Println(" 50-75%:  Yellow → Orange")
-	fmt.Println("75-100%:  Orange → Red")
+	fmt.Println("75-100%: Orange → Red")
 	fmt.Println("\nOnly the filled portion is shown!")
 }
