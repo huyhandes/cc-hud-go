@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
 )
@@ -15,14 +14,8 @@ func (r *RateLimitSegment) ID() string {
 	return "ratelimit"
 }
 
-func (r *RateLimitSegment) Enabled(cfg *config.Config) bool {
-	return cfg.Display.RateLimits
-}
-
-func (r *RateLimitSegment) Render(s *state.State, cfg *config.Config) (string, error) {
-	// This segment now only renders 7d limit
-	// 5h limit is rendered separately by FiveHourSegment
-
+func (r *RateLimitSegment) Render(s *state.State) (string, error) {
+	// 7-day limit only. 5-hour limit is rendered by FiveHourSegment.
 	// OAuth API is the single source of truth; render empty on failure.
 	if s.RateLimits.SevenDayPercent <= 0 {
 		return "", nil
@@ -40,11 +33,7 @@ func (f *FiveHourSegment) ID() string {
 	return "fivehour"
 }
 
-func (f *FiveHourSegment) Enabled(cfg *config.Config) bool {
-	return cfg.Display.RateLimits
-}
-
-func (f *FiveHourSegment) Render(s *state.State, cfg *config.Config) (string, error) {
+func (f *FiveHourSegment) Render(s *state.State) (string, error) {
 	// Only render if OAuth data available
 	if s.RateLimits.FiveHourPercent <= 0 {
 		return "", nil

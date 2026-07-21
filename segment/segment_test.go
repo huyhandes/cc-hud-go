@@ -3,7 +3,6 @@ package segment
 import (
 	"testing"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
@@ -28,7 +27,6 @@ func TestByID(t *testing.T) {
 }
 
 func TestRegistry(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
 	segments := All()
@@ -49,11 +47,8 @@ func TestRegistry(t *testing.T) {
 			t.Error("segment ID should not be empty")
 		}
 
-		// Should be able to check if enabled
-		_ = seg.Enabled(cfg)
-
 		// Should be able to render
-		_, err := seg.Render(s, cfg)
+		_, err := seg.Render(s)
 		if err != nil {
 			t.Errorf("segment %s render failed: %v", seg.ID(), err)
 		}

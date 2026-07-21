@@ -5,12 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestFiveHourSegment(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 15.0
 
@@ -20,7 +18,7 @@ func TestFiveHourSegment(t *testing.T) {
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -40,12 +38,11 @@ func TestFiveHourSegment(t *testing.T) {
 }
 
 func TestFiveHourSegmentEmpty(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -56,7 +53,6 @@ func TestFiveHourSegmentEmpty(t *testing.T) {
 }
 
 func TestFiveHourSegmentHighUsage(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 85.0
 
@@ -66,7 +62,7 @@ func TestFiveHourSegmentHighUsage(t *testing.T) {
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -85,10 +81,8 @@ func TestFiveHourSegmentUsesGradientBar(t *testing.T) {
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 45.0
 
-	cfg := config.Default()
-
 	seg := &FiveHourSegment{}
-	result, err := seg.Render(s, cfg)
+	result, err := seg.Render(s)
 
 	if err != nil {
 		t.Fatalf("Render failed: %v", err)
@@ -134,7 +128,6 @@ func TestFiveHourSegmentTimeFormatting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.Default()
 			s := state.New()
 			s.RateLimits.FiveHourPercent = 50.0
 
@@ -142,7 +135,7 @@ func TestFiveHourSegmentTimeFormatting(t *testing.T) {
 			s.RateLimits.FiveHourResetsAt = resetTime.Format(time.RFC3339)
 
 			seg := &FiveHourSegment{}
-			output, err := seg.Render(s, cfg)
+			output, err := seg.Render(s)
 
 			if err != nil {
 				t.Fatalf("render failed: %v", err)

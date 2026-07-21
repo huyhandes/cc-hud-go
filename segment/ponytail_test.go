@@ -3,8 +3,6 @@ package segment
 import (
 	"strings"
 	"testing"
-
-	"github.com/huyhandes/cc-hud-go/config"
 )
 
 // TestPonytailRegistry covers wiring only. The renderModeBadge helper itself
@@ -22,20 +20,6 @@ func TestPonytailSegmentID(t *testing.T) {
 	}
 }
 
-func TestPonytailSegmentEnabled(t *testing.T) {
-	seg := &PonytailSegment{}
-
-	cfg := config.Default()
-	if !seg.Enabled(cfg) {
-		t.Errorf("Enabled(Default) = false, want true (Ponytail defaults on)")
-	}
-
-	cfg.Display.Ponytail = false
-	if seg.Enabled(cfg) {
-		t.Errorf("Enabled after toggle = true, want false")
-	}
-}
-
 // TestPonytailSegmentDelegates confirms Render wires through to
 // renderModeBadge with the right flag/emoji/label.
 func TestPonytailSegmentDelegates(t *testing.T) {
@@ -43,7 +27,7 @@ func TestPonytailSegmentDelegates(t *testing.T) {
 	writeFlag(t, dir, ".ponytail-active", "ultra")
 
 	seg := &PonytailSegment{}
-	out, err := seg.Render(nil, nil)
+	out, err := seg.Render(nil)
 	if err != nil {
 		t.Fatalf("Render error: %v", err)
 	}

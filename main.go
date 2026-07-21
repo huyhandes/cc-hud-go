@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/internal/git"
 	"github.com/huyhandes/cc-hud-go/internal/oauth"
 	"github.com/huyhandes/cc-hud-go/output"
@@ -34,25 +32,30 @@ DESCRIPTION:
 OPTIONS:
     -h, --help     Show this help message and exit
     -v, --version  Print version information and exit
+    --theme NAME   Catppuccin variant to render (default macchiato).
+                   Values: macchiato, mocha, frappe, latte.
+                   Unknown values fall back to macchiato.
 
 CONFIGURATION:
-    Config file: ~/.claude/cc-hud-go/config.json
-
-    See https://github.com/huyhandes/cc-hud-go#configuration for full
-    configuration options.
+    The tool ships opinionated defaults; there is no config file. The only
+    knob is --theme. Select a variant by passing the flag to your statusline
+    command.
 
 INTEGRATION:
     Add to your Claude Code config (~/.claude/config.json):
 
         {
           "statusline": {
-            "command": "cc-hud-go"
+            "command": "cc-hud-go --theme mocha"
           }
         }
 
 EXAMPLES:
     # Test with sample data
     echo '{"model":"claude-sonnet-4.5"}' | cc-hud-go
+
+    # Select a theme variant
+    echo '{...}' | cc-hud-go --theme latte
 
     # Check version
     cc-hud-go --version
@@ -75,12 +78,14 @@ func main() {
 	var (
 		versionFlag bool
 		helpFlag    bool
+		themeFlag   string
 	)
 
 	flag.BoolVar(&versionFlag, "version", false, "Print version and exit")
 	flag.BoolVar(&versionFlag, "v", false, "Print version and exit (shorthand)")
 	flag.BoolVar(&helpFlag, "help", false, "Show help message and exit")
 	flag.BoolVar(&helpFlag, "h", false, "Show help message and exit (shorthand)")
+	flag.StringVar(&themeFlag, "theme", "macchiato", "Catppuccin variant (macchiato, mocha, frappe, latte)")
 
 	// Parse flags
 	flag.Parse()
@@ -96,17 +101,10 @@ func main() {
 		fmt.Println(version.Get())
 		os.Exit(0)
 	}
-	// Load config
-	home, _ := os.UserHomeDir()
-	configPath := filepath.Join(home, ".claude", "cc-hud-go", "config.json")
-	cfg, err := config.LoadFromFile(configPath)
-	if err != nil {
-		cfg = config.Default()
-	}
 
-	// Initialize theme and style system
-	themeInstance := theme.LoadThemeFromConfig(cfg.Theme, cfg.Colors)
-	style.Init(themeInstance)
+	// Initialize theme and style system. Unknown values fall back to
+	// macchiato via theme.GetTheme's default branch.
+	style.Init(theme.GetTheme(themeFlag))
 
 	// Initialize state
 	s := state.New()
@@ -138,8 +136,9 @@ func main() {
 		s.Git.Deleted = status.Deleted
 	}
 
-	// Fetch rate limit usage from OAuth API — single source of truth.
-	// Silently no-op on failure: rate-limit segments render empty.
+	// Fetch rate limit usage from OAuth API. OAuth is the single source of
+	// truth; on failure the rate-limit segments render empty (the
+	// FiveHourSegment empty-return pattern).
 	if usage, err := oauth.FetchUsage(); err == nil {
 		s.RateLimits.FiveHourPercent = usage.FiveHour.Utilization
 		s.RateLimits.SevenDayPercent = usage.SevenDay.Utilization
@@ -148,7 +147,7 @@ func main() {
 	}
 
 	// Render and output statusline
-	result, err := output.Render(s, cfg)
+	result, err := output.Render(s)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error rendering output: %v\n", err)
 		os.Exit(1)

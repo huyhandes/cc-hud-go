@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/segment"
 	"github.com/huyhandes/cc-hud-go/state"
@@ -13,22 +12,22 @@ import (
 )
 
 // Render generates plain text output for the statusline
-func Render(s *state.State, cfg *config.Config) (string, error) {
+func Render(s *state.State) (string, error) {
 	// Update derived fields before rendering
 	s.UpdateDerived()
-	return renderMultiLine(s, cfg)
+	return renderMultiLine(s)
 }
 
-func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
+func renderMultiLine(s *state.State) (string, error) {
 	var lines []string
 	segs := segment.ByID()
 
 	renderSeg := func(id string) string {
 		seg, ok := segs[id]
-		if !ok || !seg.Enabled(cfg) {
+		if !ok {
 			return ""
 		}
-		text, _ := seg.Render(s, cfg)
+		text, _ := seg.Render(s)
 		return text
 	}
 
@@ -36,7 +35,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	line1 := []string{}
 
 	modelAndContext := renderSeg("model")
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		ctxSize := renderContextSize(s)
 		if modelAndContext != "" {
 			modelAndContext += " " + ctxSize
@@ -48,7 +47,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		line1 = append(line1, modelAndContext)
 	}
 
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
 	}
 	if text := renderSeg("fivehour"); text != "" {
@@ -69,7 +68,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if text := renderSeg("ponytail"); text != "" {
 		line2 = append(line2, text)
 	}
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		line2 = append(line2, renderIOTokens(s))
 		if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
 			line2 = append(line2, renderCacheTokens(s))
@@ -85,7 +84,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line2))
 	}
 
-	// Line 3: Git | File changes | Tasks
+	// Line 3: Git | File changes
 	line3 := []string{}
 	if text := renderSeg("git"); text != "" {
 		line3 = append(line3, text)

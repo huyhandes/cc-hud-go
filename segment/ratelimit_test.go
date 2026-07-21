@@ -4,18 +4,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestRateLimitSegment(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.SevenDayPercent = 75
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -26,12 +24,11 @@ func TestRateLimitSegment(t *testing.T) {
 }
 
 func TestRateLimitSegmentEmpty(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -42,18 +39,16 @@ func TestRateLimitSegmentEmpty(t *testing.T) {
 }
 
 func TestRateLimitSegmentHighUsage(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.SevenDayPercent = 85
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
 
-	// Should show warning when usage exceeds threshold
 	if !strings.Contains(output, "85%") {
 		t.Errorf("expected percentage in output, got '%s'", output)
 	}
@@ -63,10 +58,8 @@ func TestRateLimitUsesGradientBar(t *testing.T) {
 	s := state.New()
 	s.RateLimits.SevenDayPercent = 67
 
-	cfg := config.Default()
-
 	seg := &RateLimitSegment{}
-	result, err := seg.Render(s, cfg)
+	result, err := seg.Render(s)
 
 	if err != nil {
 		t.Fatalf("Render failed: %v", err)

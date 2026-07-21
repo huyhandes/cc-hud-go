@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
 	"github.com/huyhandes/cc-hud-go/theme"
@@ -17,13 +16,12 @@ func init() {
 }
 
 func TestRender(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.Model.Name = "Sonnet 4.5"
 	s.Context.UsedTokens = 5000
 	s.Context.TotalTokens = 10000
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -41,12 +39,11 @@ func TestRender(t *testing.T) {
 	}
 }
 
-func TestRenderWithDisabledSegments(t *testing.T) {
-	cfg := config.Default()
+func TestRenderMinimalState(t *testing.T) {
 	s := state.New()
 	s.Model.Name = "Sonnet 4.5"
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -61,18 +58,15 @@ func TestRenderWithDisabledSegments(t *testing.T) {
 }
 
 func TestRenderEmptyState(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
-	_, err := Render(s, cfg)
+	_, err := Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
 }
 
 func TestRenderMultiLine(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineLayout = "multiline"
 	s := state.New()
 	s.Model.Name = "Opus 4.6"
 	s.Context.UsedTokens = 50000
@@ -86,7 +80,7 @@ func TestRenderMultiLine(t *testing.T) {
 	s.Cost.LinesAdded = 45
 	s.Cost.LinesRemoved = 12
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("renderMultiLine failed: %v", err)
 	}
@@ -119,29 +113,11 @@ func TestRenderMultiLine(t *testing.T) {
 	}
 }
 
-func TestRenderMultiLineExpanded(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineLayout = "expanded"
-	s := state.New()
-	s.Model.Name = "Sonnet 4.5"
-	s.Context.UsedTokens = 100000
-	s.Context.TotalTokens = 200000
-
-	output, err := Render(s, cfg)
-	if err != nil {
-		t.Fatalf("render expanded failed: %v", err)
-	}
-
-	if !strings.Contains(output, "Sonnet") {
-		t.Error("expected model name in expanded layout")
-	}
-}
-
-// TestRenderMultiLineModeBadges is a regression test: the expanded/multiline
-// layout hardcodes line 1 by segment ID, so a newly-registered mode segment
-// (caveman, ponytail) will NOT appear just by being in segment.All() — the
-// renderer must call renderSeg for it explicitly. This test fails if either
-// mode badge is wired into the registry but forgotten in renderMultiLine.
+// TestRenderMultiLineModeBadges is a regression test: renderMultiLine
+// hardcodes line 2 by segment ID, so a mode segment (caveman, ponytail)
+// will NOT appear just by being in segment.All() — the renderer must call
+// renderSeg for it explicitly. This test fails if either mode badge is
+// wired into the registry but forgotten in renderMultiLine.
 func TestRenderMultiLineModeBadges(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("CLAUDE_CONFIG_DIR", dir)
@@ -151,33 +127,29 @@ func TestRenderMultiLineModeBadges(t *testing.T) {
 		}
 	}
 
-	cfg := config.Default()
-	cfg.LineLayout = "expanded"
 	s := state.New()
 	s.Model.Name = "Test"
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
 
 	if !strings.Contains(output, "CAVEMAN:ULTRA") {
-		t.Errorf("expected CAVEMAN:ULTRA badge in expanded layout, got: %s", output)
+		t.Errorf("expected CAVEMAN:ULTRA badge, got: %s", output)
 	}
 	if !strings.Contains(output, "PONYTAIL:ULTRA") {
-		t.Errorf("expected PONYTAIL:ULTRA badge in expanded layout, got: %s", output)
+		t.Errorf("expected PONYTAIL:ULTRA badge, got: %s", output)
 	}
 }
 
 func TestRenderMultiLineMinimalState(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineLayout = "multiline"
 	s := state.New()
 	s.Model.Name = "Haiku 4.5"
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
-		t.Fatalf("render multiline empty state failed: %v", err)
+		t.Fatalf("render empty state failed: %v", err)
 	}
 
 	if !strings.Contains(output, "Haiku") {
@@ -192,8 +164,6 @@ func TestRenderMultiLineMinimalState(t *testing.T) {
 }
 
 func TestRenderMultiLineNoCacheTokens(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineLayout = "multiline"
 	s := state.New()
 	s.Model.Name = "Test"
 	s.Context.UsedTokens = 5000
@@ -201,7 +171,7 @@ func TestRenderMultiLineNoCacheTokens(t *testing.T) {
 	s.Context.TotalInputTokens = 3000
 	s.Context.TotalOutputTokens = 2000
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -212,15 +182,13 @@ func TestRenderMultiLineNoCacheTokens(t *testing.T) {
 }
 
 func TestRenderMultiLineWithRateLimits(t *testing.T) {
-	cfg := config.Default()
-	cfg.LineLayout = "multiline"
 	s := state.New()
 	s.Model.Name = "Test"
 	s.Context.UsedTokens = 5000
 	s.Context.TotalTokens = 200000
 	s.RateLimits.SevenDayPercent = 30
 
-	output, err := Render(s, cfg)
+	output, err := Render(s)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

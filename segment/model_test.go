@@ -4,12 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestModelSegment(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.Model.Name = "claude-sonnet-4.5"
 
@@ -19,11 +17,7 @@ func TestModelSegment(t *testing.T) {
 		t.Errorf("expected ID 'model', got '%s'", seg.ID())
 	}
 
-	if !seg.Enabled(cfg) {
-		t.Error("expected segment to be enabled by default")
-	}
-
-	output, err := seg.Render(s, cfg)
+	output, err := seg.Render(s)
 	if err != nil {
 		t.Fatalf("render failed: %v", err)
 	}
@@ -32,18 +26,18 @@ func TestModelSegment(t *testing.T) {
 		t.Errorf("expected output to contain model name, got '%s'", output)
 	}
 
-	// Plan type is no longer displayed separately in redesigned format
-	// Just verify model name is present
 	t.Logf("Model output: %s", output)
 }
 
-func TestModelSegmentDisabled(t *testing.T) {
-	cfg := config.Default()
-	cfg.Display.Model = false
-
+func TestModelSegmentEmpty(t *testing.T) {
+	s := state.New()
 	seg := &ModelSegment{}
 
-	if seg.Enabled(cfg) {
-		t.Error("expected segment to be disabled")
+	output, err := seg.Render(s)
+	if err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+	if output != "" {
+		t.Errorf("expected empty output with no model name, got '%s'", output)
 	}
 }

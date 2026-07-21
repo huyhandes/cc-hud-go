@@ -17,12 +17,15 @@ func buildBinary(t *testing.T) (string, func()) {
 	return "cc-hud-go-test", func() { exec.Command("rm", "cc-hud-go-test").Run() }
 }
 
-func runBinary(t *testing.T, stdin string) string {
+// runBinary pipes stdin into the built binary, optionally appending extra
+// argv to the invocation. CLICOLOR_FORCE=1 makes lipgloss emit ANSI codes
+// even though stdout is a pipe (otherwise theme differences are invisible
+// to the theme-flag integration test).
+func runBinary(t *testing.T, stdin string, args ...string) string {
 	t.Helper()
-	testScript := `/bin/sh -c '
-echo ` + strconv.Quote(stdin) + `
-' | ./cc-hud-go-test 2>&1`
-	out, err := exec.Command("/bin/sh", "-c", testScript).Output()
+	argv := []string{"-c", "CLICOLOR_FORCE=1 /bin/sh -c 'echo " + strconv.Quote(stdin) + "' | CLICOLOR_FORCE=1 ./cc-hud-go-test " +
+		strings.Join(args, " ") + " 2>&1"}
+	out, err := exec.Command("/bin/sh", argv...).Output()
 	if err != nil {
 		if _, ok := err.(*exec.ExitError); !ok {
 			t.Fatalf("failed to run: %v", err)
@@ -87,4 +90,50 @@ func TestIntegrationWithRateLimits(t *testing.T) {
 	}
 
 	t.Logf("Success with rate limits path! Output: %s", outputStr)
+}
+
+// TestIntegrationThemeFlag proves --theme wires through end-to-end: mocha
+// and the default (macchiato) must render different ANSI color codes.
+// Also confirms an unknown value falls back gracefully (no error, same
+// output as default).
+//
+// Comparison ignores line 1 because the rate-limit segments pull live
+// OAuth data that varies call-to-call; lines 2+ are colored and stable.
+func TestIntegrationThemeFlag(t *testing.T) {
+	_, cleanup := buildBinary(t)
+	defer cleanup()
+
+	stdin := `{"session_id":"test123","cwd":"/test","model":{"id":"claude-sonnet-4-5","display_name":"Sonnet 4.5"},"workspace":{"current_dir":"/test","project_dir":"/test"},"context_window":{"total_input_tokens":50000,"total_output_tokens":10000,"context_window_size":200000,"used_percentage":30.0,"remaining_percentage":70.0,"current_usage":{"input_tokens":40000,"output_tokens":10000,"cache_creation_input_tokens":5000,"cache_read_input_tokens":5000}}}`
+
+	// dropLine1 removes the model+context+ratelimit line (volatile OAuth data).
+	dropLine1 := func(out string) string {
+		lines := strings.Split(out, "\n")
+		if len(lines) <= 1 {
+			return out
+		}
+		return strings.Join(lines[1:], "\n")
+	}
+
+	defaultOut := dropLine1(runBinary(t, stdin))
+	mochaOut := dropLine1(runBinary(t, stdin, "--theme", "mocha"))
+	bogusOut := dropLine1(runBinary(t, stdin, "--theme", "bogus"))
+
+	if defaultOut == "" || mochaOut == "" {
+		t.Fatal("expected non-empty output for both default and mocha")
+	}
+
+	// mocha must differ in styling from default macchiato.
+	if defaultOut == mochaOut {
+		t.Errorf("expected --theme mocha to produce different ANSI codes than default macchiato\n"+
+			"default: %q\nmocha:   %q", defaultOut, mochaOut)
+	}
+
+	// Unknown value falls back to macchiato — output must match default.
+	if bogusOut != defaultOut {
+		t.Errorf("expected --theme bogus to fall back to macchiato (same as default)\n"+
+			"default: %q\nbogus:   %q", defaultOut, bogusOut)
+	}
+
+	t.Logf("default: %s", defaultOut)
+	t.Logf("mocha:   %s", mochaOut)
 }
