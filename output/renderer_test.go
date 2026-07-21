@@ -218,8 +218,7 @@ func TestRenderMultiLineWithRateLimits(t *testing.T) {
 	s.Model.Name = "Test"
 	s.Context.UsedTokens = 5000
 	s.Context.TotalTokens = 200000
-	s.RateLimits.SevenDayUsed = 300
-	s.RateLimits.SevenDayTotal = 1000
+	s.RateLimits.SevenDayPercent = 30
 
 	output, err := Render(s, cfg)
 	if err != nil {

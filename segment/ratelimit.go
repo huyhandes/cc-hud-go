@@ -23,22 +23,14 @@ func (r *RateLimitSegment) Render(s *state.State, cfg *config.Config) (string, e
 	// This segment now only renders 7d limit
 	// 5h limit is rendered separately by FiveHourSegment
 
-	// Prefer OAuth API data (more accurate)
-	if s.RateLimits.SevenDayPercent > 0 {
-		bar7d := style.RenderGradientBar(s.RateLimits.SevenDayPercent, 10)
-		percentStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(s.RateLimits.SevenDayPercent))
-		return fmt.Sprintf("📊 %s %s", bar7d, percentStyle.Render(fmt.Sprintf("%.0f%%", s.RateLimits.SevenDayPercent))), nil
-	}
-
-	// Fallback to stdin data (if provided)
-	if s.RateLimits.SevenDayTotal == 0 {
+	// OAuth API is the single source of truth; render empty on failure.
+	if s.RateLimits.SevenDayPercent <= 0 {
 		return "", nil
 	}
 
-	sevenDayPercentage := float64(s.RateLimits.SevenDayUsed) / float64(s.RateLimits.SevenDayTotal) * 100.0
-	bar := style.RenderGradientBar(sevenDayPercentage, 10)
-	percentStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(sevenDayPercentage))
-	return fmt.Sprintf("📊 %s %s", bar, percentStyle.Render(fmt.Sprintf("%.0f%%", sevenDayPercentage))), nil
+	bar7d := style.RenderGradientBar(s.RateLimits.SevenDayPercent, 10)
+	percentStyle := style.GetRenderer().NewStyle().Foreground(style.ThresholdColor(s.RateLimits.SevenDayPercent))
+	return fmt.Sprintf("📊 %s %s", bar7d, percentStyle.Render(fmt.Sprintf("%.0f%%", s.RateLimits.SevenDayPercent))), nil
 }
 
 // FiveHourSegment displays 5-hour rate limit with elapsed time

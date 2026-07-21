@@ -124,14 +124,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse transcript file for tool usage if available
-	if s.Session.TranscriptPath != "" {
-		if err := parser.ParseTranscript(s.Session.TranscriptPath, s); err != nil {
-			// Don't fail on transcript errors, just log
-			fmt.Fprintf(os.Stderr, "Warning: failed to parse transcript: %v\n", err)
-		}
-	}
-
 	// Update git information
 	if branch, err := git.GetBranch(); err == nil {
 		s.Git.Branch = branch
@@ -146,15 +138,13 @@ func main() {
 		s.Git.Deleted = status.Deleted
 	}
 
-	// Fetch rate limit usage from OAuth API (if enabled)
-	if cfg.Display.FetchOAuth {
-		if usage, err := oauth.FetchUsage(); err == nil {
-			s.RateLimits.FiveHourPercent = usage.FiveHour.Utilization
-			s.RateLimits.SevenDayPercent = usage.SevenDay.Utilization
-			s.RateLimits.FiveHourResetsAt = usage.FiveHour.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
-			s.RateLimits.SevenDayResetsAt = usage.SevenDay.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
-		}
-		// Silently fail if OAuth fetch fails - we'll use stdin data as fallback
+	// Fetch rate limit usage from OAuth API — single source of truth.
+	// Silently no-op on failure: rate-limit segments render empty.
+	if usage, err := oauth.FetchUsage(); err == nil {
+		s.RateLimits.FiveHourPercent = usage.FiveHour.Utilization
+		s.RateLimits.SevenDayPercent = usage.SevenDay.Utilization
+		s.RateLimits.FiveHourResetsAt = usage.FiveHour.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
+		s.RateLimits.SevenDayResetsAt = usage.SevenDay.ResetsAt.Format("2006-01-02T15:04:05Z07:00")
 	}
 
 	// Render and output statusline

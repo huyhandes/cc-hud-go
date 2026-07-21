@@ -11,8 +11,7 @@ import (
 func TestRateLimitSegment(t *testing.T) {
 	cfg := config.Default()
 	s := state.New()
-	s.RateLimits.SevenDayUsed = 75
-	s.RateLimits.SevenDayTotal = 100
+	s.RateLimits.SevenDayPercent = 75
 
 	seg := &RateLimitSegment{}
 
@@ -45,8 +44,7 @@ func TestRateLimitSegmentEmpty(t *testing.T) {
 func TestRateLimitSegmentHighUsage(t *testing.T) {
 	cfg := config.Default()
 	s := state.New()
-	s.RateLimits.SevenDayUsed = 85
-	s.RateLimits.SevenDayTotal = 100
+	s.RateLimits.SevenDayPercent = 85
 
 	seg := &RateLimitSegment{}
 
@@ -63,8 +61,7 @@ func TestRateLimitSegmentHighUsage(t *testing.T) {
 
 func TestRateLimitUsesGradientBar(t *testing.T) {
 	s := state.New()
-	s.RateLimits.SevenDayUsed = 67
-	s.RateLimits.SevenDayTotal = 100
+	s.RateLimits.SevenDayPercent = 67
 
 	cfg := config.Default()
 

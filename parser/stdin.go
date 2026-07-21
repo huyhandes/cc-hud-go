@@ -8,8 +8,7 @@ import (
 
 // StdinData represents the JSON structure from Claude Code statusline API
 type StdinData struct {
-	TranscriptPath string `json:"transcript_path"`
-	Model          struct {
+	Model struct {
 		ID          string `json:"id"`
 		DisplayName string `json:"display_name"`
 	} `json:"model"`
@@ -31,13 +30,6 @@ type StdinData struct {
 		TotalLinesAdded   int     `json:"total_lines_added"`
 		TotalLinesRemoved int     `json:"total_lines_removed"`
 	} `json:"cost,omitempty"`
-	Agent *struct {
-		Name string `json:"name"`
-	} `json:"agent,omitempty"`
-	RateLimits *struct {
-		SevenDayUsed  int `json:"seven_day_used"`
-		SevenDayTotal int `json:"seven_day_total"`
-	} `json:"rate_limits,omitempty"`
 }
 
 // ParseStdin parses stdin JSON from Claude Code and updates state
@@ -46,8 +38,6 @@ func ParseStdin(data []byte, s *state.State) error {
 	if err := json.Unmarshal(data, &stdin); err != nil {
 		return err
 	}
-
-	s.Session.TranscriptPath = stdin.TranscriptPath
 
 	s.Model.Name = stdin.Model.DisplayName
 	if s.Model.Name == "" {
@@ -68,20 +58,11 @@ func ParseStdin(data []byte, s *state.State) error {
 		s.Context.UsedTokens = stdin.ContextWindow.TotalInputTokens
 	}
 
-	if stdin.Agent != nil {
-		s.Agents.ActiveAgent = stdin.Agent.Name
-	}
-
 	if stdin.Cost != nil {
 		s.Cost.TotalUSD = stdin.Cost.TotalCostUSD
 		s.Cost.DurationMs = stdin.Cost.TotalDurationMs
 		s.Cost.LinesAdded = stdin.Cost.TotalLinesAdded
 		s.Cost.LinesRemoved = stdin.Cost.TotalLinesRemoved
-	}
-
-	if stdin.RateLimits != nil {
-		s.RateLimits.SevenDayUsed = stdin.RateLimits.SevenDayUsed
-		s.RateLimits.SevenDayTotal = stdin.RateLimits.SevenDayTotal
 	}
 
 	return nil

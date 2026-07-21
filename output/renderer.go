@@ -93,18 +93,8 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
 		line3 = append(line3, renderFileChanges(s))
 	}
-	if text := renderSeg("tasks"); text != "" {
-		line3 = append(line3, text)
-	}
 	if len(line3) > 0 {
 		lines = append(lines, joinSegments(line3))
-	}
-
-	// Line 4+: Each tool/agent segment on its own line
-	for _, id := range []string{"tools", "agent"} {
-		if text := renderSeg(id); text != "" {
-			lines = append(lines, text)
-		}
 	}
 
 	return strings.Join(lines, "\n"), nil

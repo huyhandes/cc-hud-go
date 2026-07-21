@@ -8,9 +8,6 @@ type State struct {
 	Context    ContextInfo
 	RateLimits RateLimitInfo
 	Git        GitInfo
-	Tools      ToolsState
-	Agents     AgentInfo
-	Tasks      TaskInfo
 	Session    SessionInfo
 	Cost       CostInfo
 }
@@ -31,8 +28,6 @@ type ContextInfo struct {
 }
 
 type RateLimitInfo struct {
-	SevenDayUsed     int
-	SevenDayTotal    int
 	FiveHourPercent  float64 // From OAuth API
 	SevenDayPercent  float64 // From OAuth API
 	FiveHourResetsAt string  // ISO 8601 timestamp
@@ -49,38 +44,8 @@ type GitInfo struct {
 	Deleted    int
 }
 
-type ToolsState struct {
-	AppTools      map[string]int
-	InternalTools map[string]int
-	CustomTools   map[string]int
-	MCPTools      map[MCPServer]map[string]int
-	Skills        map[string]SkillUsage
-	LastUsed      map[string]string // category key -> last tool/skill name
-}
-
-type MCPServer struct {
-	Name string
-	Type string
-}
-
-type SkillUsage struct {
-	Count int
-}
-
-type AgentInfo struct {
-	ActiveAgent string
-	TaskDesc    string
-}
-
-type TaskInfo struct {
-	Pending    int
-	InProgress int
-	Completed  int
-}
-
 type SessionInfo struct {
-	TranscriptPath string
-	StartTime      time.Time
+	StartTime time.Time
 }
 
 type CostInfo struct {
@@ -90,17 +55,9 @@ type CostInfo struct {
 	LinesRemoved int
 }
 
-// New creates a new State with initialized maps
+// New creates a new State
 func New() *State {
 	return &State{
-		Tools: ToolsState{
-			AppTools:      make(map[string]int),
-			InternalTools: make(map[string]int),
-			CustomTools:   make(map[string]int),
-			MCPTools:      make(map[MCPServer]map[string]int),
-			Skills:        make(map[string]SkillUsage),
-			LastUsed:      make(map[string]string),
-		},
 		Session: SessionInfo{
 			StartTime: time.Now(),
 		},

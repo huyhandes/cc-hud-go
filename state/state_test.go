@@ -14,10 +14,6 @@ func TestNewState(t *testing.T) {
 	if s.Session.StartTime.IsZero() {
 		t.Error("expected StartTime to be set")
 	}
-
-	if s.Tools.AppTools == nil {
-		t.Error("expected AppTools map to be initialized")
-	}
 }
 
 func TestUpdateDerived(t *testing.T) {

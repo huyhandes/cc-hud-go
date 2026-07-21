@@ -18,12 +18,7 @@ func All() []Segment {
 		&ModelSegment{},
 		&CavemanSegment{},
 		&PonytailSegment{},
-		&ContextSegment{},
 		&GitSegment{},
-		&CostSegment{},
-		&ToolsSegment{},
-		&TasksSegment{},
-		&AgentSegment{},
 		&FiveHourSegment{},
 		&RateLimitSegment{},
 	}
