@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/segment"
 	"github.com/huyhandes/cc-hud-go/state"
@@ -13,30 +12,31 @@ import (
 )
 
 // Render generates plain text output for the statusline
-func Render(s *state.State, cfg *config.Config) (string, error) {
+func Render(s *state.State) (string, error) {
 	// Update derived fields before rendering
 	s.UpdateDerived()
-	return renderMultiLine(s, cfg)
+	return renderMultiLine(s)
 }
 
-func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
+func renderMultiLine(s *state.State) (string, error) {
 	var lines []string
-	segs := segment.ByID()
 
+	// renderSeg looks up a segment by ID across All() and renders it.
+	// N=6, so a linear scan is cheaper than allocating a map per tick.
 	renderSeg := func(id string) string {
-		seg, ok := segs[id]
-		if !ok || !seg.Enabled(cfg) {
-			return ""
+		for _, seg := range segment.All() {
+			if seg.ID() == id {
+				return seg.Render(s)
+			}
 		}
-		text, _ := seg.Render(s, cfg)
-		return text
+		return ""
 	}
 
 	// Line 1: Model Context Size | Context Bar | 5h Limit | 7d Limit
 	line1 := []string{}
 
 	modelAndContext := renderSeg("model")
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		ctxSize := renderContextSize(s)
 		if modelAndContext != "" {
 			modelAndContext += " " + ctxSize
@@ -48,7 +48,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		line1 = append(line1, modelAndContext)
 	}
 
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		line1 = append(line1, renderContextBar(s))
 	}
 	if text := renderSeg("fivehour"); text != "" {
@@ -69,7 +69,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if text := renderSeg("ponytail"); text != "" {
 		line2 = append(line2, text)
 	}
-	if cfg.Display.Context && s.Context.TotalTokens > 0 {
+	if s.Context.TotalTokens > 0 {
 		line2 = append(line2, renderIOTokens(s))
 		if s.Context.CacheReadTokens > 0 || s.Context.CacheCreateTokens > 0 {
 			line2 = append(line2, renderCacheTokens(s))
@@ -85,7 +85,7 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 		lines = append(lines, joinSegments(line2))
 	}
 
-	// Line 3: Git | File changes | Tasks
+	// Line 3: Git | File changes
 	line3 := []string{}
 	if text := renderSeg("git"); text != "" {
 		line3 = append(line3, text)
@@ -93,18 +93,8 @@ func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
 	if s.Cost.LinesAdded > 0 || s.Cost.LinesRemoved > 0 {
 		line3 = append(line3, renderFileChanges(s))
 	}
-	if text := renderSeg("tasks"); text != "" {
-		line3 = append(line3, text)
-	}
 	if len(line3) > 0 {
 		lines = append(lines, joinSegments(line3))
-	}
-
-	// Line 4+: Each tool/agent segment on its own line
-	for _, id := range []string{"tools", "agent"} {
-		if text := renderSeg(id); text != "" {
-			lines = append(lines, text)
-		}
 	}
 
 	return strings.Join(lines, "\n"), nil

@@ -166,10 +166,7 @@ func TestCavemanSegmentDelegates(t *testing.T) {
 	// renderModeBadge. No flag file → empty, no error.
 	withConfigDir(t)
 	seg := &CavemanSegment{}
-	out, err := seg.Render(nil, nil)
-	if err != nil {
-		t.Fatalf("Render error: %v", err)
-	}
+	out := seg.Render(nil)
 	if out != "" {
 		t.Errorf("Render with no flag = %q, want empty", out)
 	}

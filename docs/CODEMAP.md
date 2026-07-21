@@ -1,6 +1,6 @@
 # Code Map - cc-hud-go
 
-**Stats:** 52 Go files · 192 functions · 73 deps
+**Stats:** ~30 Go files · default-only mode · 4 Catppuccin themes
 
 ## Project Structure
 
@@ -17,34 +17,23 @@ cc-hud-go/
 ├── CHANGELOG.md               # Version history
 ├── LICENSE
 │
-├── config/                    # Configuration management
-│   ├── config.go             # Config struct, presets (Full/Essential/Minimal)
-│   └── config_test.go        # Configuration tests
-│
 ├── state/                     # Session state tracking
 │   ├── state.go              # State struct, derived field calculation
 │   └── state_test.go         # State tests
 │
-├── parser/                    # Input parsing (split into 4 files)
+├── parser/                    # Stdin JSON parsing (single concern)
 │   ├── stdin.go              # StdinData type, ParseStdin()
-│   ├── transcript.go         # TranscriptLine types, ParseTranscript*()
-│   ├── task.go               # TaskItem, TaskTracker, task processing
-│   ├── tool.go               # ToolCategory, CategorizeTool(), appTools map
-│   ├── stdin_test.go         # Stdin parser tests
-│   ├── transcript_test.go    # Transcript parser tests
-│   └── tasks_test.go         # Task tracking tests
+│   └── stdin_test.go         # Stdin parser tests
 │
 ├── segment/                   # Display segments (modular components)
 │   ├── segment.go            # Segment interface, All(), ByID() registry
 │   ├── model.go              # Model name display
-│   ├── context.go            # Token usage & gradient bar
+│   ├── caveman.go            # Caveman mode badge (self-gating)
+│   ├── ponytail.go           # Ponytail mode badge (self-gating)
 │   ├── git.go                # Git branch, status, file stats
-│   ├── cost.go               # Cost tracking & duration
-│   ├── tools.go              # Tool usage categorization
-│   ├── tasks.go              # Task progress dashboard
-│   ├── agent.go              # Active agent display
-│   ├── ratelimit.go          # API rate limit tracking (5h + 7d)
-│   └── *_test.go             # Segment tests (incl. fivehour_test.go)
+│   ├── fivehour.go           # 5-hour rate limit tracking
+│   ├── ratelimit.go          # 7-day API rate limit tracking
+│   └── *_test.go             # Segment tests
 │
 ├── output/                    # Output formatting
 │   ├── renderer.go           # Multi-line & single-line layouts
@@ -54,12 +43,10 @@ cc-hud-go/
 │   ├── format.go             # Tokens(), Duration(), Cost()
 │   └── format_test.go        # Formatter tests
 │
-├── style/                     # Lipgloss styling system (split into 3 files)
+├── style/                     # Lipgloss styling system
 │   ├── style.go              # Colors, styles, Init(), ThresholdColor()
 │   ├── gradient.go           # RenderGradientBar(), color interpolation
-│   ├── table.go              # RenderTable() box-drawing tables
-│   ├── gradient_test.go      # Gradient rendering tests
-│   └── table_test.go         # Table rendering tests
+│   └── gradient_test.go      # Gradient rendering tests
 │
 ├── theme/                     # Theme system
 │   ├── theme.go              # Theme interface & loader
@@ -85,9 +72,8 @@ cc-hud-go/
 │       └── main.go
 │
 ├── docs/                      # Documentation
+│   ├── adr/                  # Architectural Decision Records
 │   ├── CODEMAP.md            # This file
-│   ├── COLOR_SCHEME.md       # Color palette reference
-│   ├── CONFIG.md             # Configuration reference
 │   ├── MANUAL_TEST.md        # Manual testing guide
 │   ├── TEST_RESULTS.md       # Test results
 │   ├── BUILD_GUIDE.md        # Build instructions
@@ -98,17 +84,7 @@ cc-hud-go/
 │   ├── RELEASE_NOTES_v0.2.0.md
 │   └── plans/                # Design and implementation plans
 │
-├── examples/                  # Example configurations
-│   ├── README.md
-│   ├── config-macchiato.json
-│   ├── config-mocha.json
-│   ├── config-frappe.json
-│   ├── config-latte.json
-│   └── config-custom-colors.json
-│
 ├── testdata/                  # Test fixtures
-│   ├── config_valid.json
-│   └── config_invalid.json
 │
 ├── assets/                    # Screenshots and preview images
 │   └── preview.jpeg
@@ -124,18 +100,17 @@ cc-hud-go/
 
 | Package | Purpose |
 |---------|---------|
-| `main` | Entry point: CLI flags, stdin reading, config loading, theme init, rendering |
-| `config` | Config struct, three presets (Full/Essential/Minimal), validation and defaults |
+| `main` | Entry point: CLI flags, stdin reading, theme init, rendering |
 | `state` | Centralized session state with automatic derived field calculation |
-| `parser` | Dual input parsing: stdin JSON from Claude Code and JSONL transcript files |
+| `parser` | Stdin JSON parsing from Claude Code |
 | `segment` | Modular display components implementing the Segment interface |
 | `output` | Output renderer producing multi-line and single-line statusline layouts |
 | `format` | Shared formatting helpers: Tokens(), Duration(), Cost() |
-| `style` | Lipgloss styling: semantic colors, gradient bars, box-drawing tables |
+| `style` | Lipgloss styling: semantic colors, gradient bars |
 | `theme` | Theme system with 4 Catppuccin variants (Macchiato/Mocha/Frappe/Latte) |
 | `version` | Git-based version detection and build info |
 | `internal/git` | Git integration via command execution: branch, status, diff stats |
-| `internal/oauth` | OAuth authentication helpers for Claude Code API access |
+| `internal/oauth` | OAuth authentication helpers for Claude Code API access (always fetched) |
 | `cmd/test-gradient` | Developer utility for visual testing of gradient bars |
 | `cmd/test-oauth` | Developer utility for testing the OAuth authentication flow |
 
@@ -144,19 +119,17 @@ cc-hud-go/
 ### Hub Packages (most imported)
 
 ```
-state    ← 27 importers  (session data flows through here)
-config   ← 22 importers  (all segments + renderer read config)
-style    ← 12 importers  (all rendering code uses style)
-theme    ←  4 importers
-format   ←  3 importers
-oauth    ←  2 importers
+state    ← session data flows through here
+style    ← all rendering code uses style
+theme    ← 4 importers
+format   ← 3 importers
+oauth    ← 2 importers
 ```
 
 ### Top-level import relationships
 
 ```
 main
-  ├── config
   ├── internal/git
   ├── internal/oauth
   ├── state
@@ -165,17 +138,14 @@ main
   └── version
 
 output/renderer
-  ├── config
   ├── format
   ├── segment  (all)
   ├── state
   └── style
 
 parser/stdin      → state
-parser/transcript → state
-parser/task       → state
 
-segment/*         → config, state, style  (all segments import these three)
+segment/*         → state, style
 
 style/style       → theme
 ```
@@ -192,24 +162,22 @@ style/style       → theme
               ┌─────────────────┐
               │   main.go       │
               │  - Read stdin   │
-              │  - Load config  │
               │  - Init theme   │
+              │  - Fetch OAuth  │
               └────────┬────────┘
                        │
          ┌─────────────┼─────────────┐
          ▼             ▼             ▼
    ┌─────────┐  ┌──────────┐  ┌─────────┐
-   │ Parser  │  │  Config  │  │  Theme  │
-   │ - Stdin │  │ - Preset │  │ - Colors│
-   │ - JSONL │  │ - Options│  │ - Styles│
+   │ Parser  │  │  OAuth   │  │  Theme  │
+   │ - Stdin │  │ - Rates  │  │ - Colors│
    └────┬────┘  └─────┬────┘  └────┬────┘
         │             │             │
         ▼             ▼             ▼
    ┌────────────────────────────────────┐
    │           State                    │
    │  - Session data                    │
-   │  - Tool usage                      │
-   │  - Task tracking                   │
+   │  - Rate limits                     │
    │  - Derived fields                  │
    └───────────────┬────────────────────┘
                    │
@@ -217,7 +185,7 @@ style/style       → theme
         ▼          ▼          ▼
    ┌────────┐ ┌────────┐ ┌────────┐
    │Segment │ │Segment │ │Segment │
-   │Model   │ │Context │ │  ...   │
+   │Model   │ │  Git   │ │  ...   │
    └───┬────┘ └───┬────┘ └───┬────┘
        │          │          │
        └──────────┼──────────┘
@@ -245,69 +213,47 @@ style/style       → theme
 
 ### Entry Point
 - `main.go`
-  - CLI flag parsing (--help, --version)
+  - CLI flag parsing (--help, --version, --theme)
   - Stdin reading and parsing
-  - Configuration loading
   - Theme initialization
+  - OAuth rate-limit fetch (always, no stdin fallback)
   - Output rendering
-
-### Configuration System
-- `config/config.go`
-  - Config struct with display options
-  - Three presets: Full, Essential, Minimal
-  - Validation and defaults
-  - Theme & color override support
 
 ### State Management
 - `state/state.go`
   - Centralized session state
   - Automatic derived field calculation (percentages, totals)
-  - Context, Git, Tools, Tasks, Cost tracking
+  - Git, rate-limit tracking
 
-### Parsing (split into 4 files)
+### Parsing
 - `parser/stdin.go` - StdinData struct, ParseStdin()
-- `parser/transcript.go` - TranscriptLine types, ParseTranscript*()
-- `parser/task.go` - TaskTracker, task tool processing
-- `parser/tool.go` - ToolCategory, CategorizeTool()
 
 ### Display Segments
 
-Each segment implements:
-```go
-type Segment interface {
-    ID() string
-    Render(s *state.State, cfg *config.Config) (string, error)
-    Enabled(cfg *config.Config) bool
-}
-```
+Each segment self-gates by returning `""` when it has nothing to render.
 
 Available segments (via `All()` or `ByID()` registry):
 
 | File | ID | Display |
 |------|----|---------|
 | `model.go` | `model` | Current Claude model name |
-| `context.go` | `context` | Gradient bar + token counts |
+| `caveman.go` | `caveman` | Caveman mode badge (when active) |
+| `ponytail.go` | `ponytail` | Ponytail mode badge (when active) |
 | `git.go` | `git` | Branch, dirty files, ahead/behind, file stats |
-| `cost.go` | `cost` | USD cost + session duration |
-| `tools.go` | `tools` | Tool usage by category (App/MCP/Skills/Custom) |
-| `tasks.go` | `tasks` | Task completion progress |
-| `agent.go` | `agent` | Active agent name and current task |
-| `ratelimit.go` | `ratelimit` | 5-hour and 7-day API rate limit tracking |
+| `fivehour.go` | `fivehour` | 5-hour API rate limit tracking |
+| `ratelimit.go` | `ratelimit` | 7-day API rate limit tracking |
 
 ### Formatting
 - `format/format.go` - Shared helpers: Tokens(), Duration(), Cost()
 
 ### Output Rendering
 - `output/renderer.go`
-  - **renderMultiLine()** - Custom 4-line layout (uses ByID() map)
-  - **renderSingleLine()** - Compact horizontal layout
-  - **renderContextBar()** - Gradient bar with percentage
+  - **renderMultiLine()** - Custom multi-line layout (iterates segment.All())
   - **renderFileChanges()** - +/- line changes
 
-### Styling (split into 3 files)
+### Styling
 - `style/style.go` - Colors, Init(), ThresholdColor(), GetRenderer()
 - `style/gradient.go` - RenderGradientBar(), color interpolation
-- `style/table.go` - RenderTable() box-drawing tables
 
 ### Themes
 - `theme/catppuccin.go`
@@ -336,36 +282,19 @@ From the Charm ecosystem (via go.mod):
 
 ### Multi-line Layout Example
 ```
-Line 1: model name + context gradient bar + percentage
-Line 2: token breakdown (input/output/cache) + cost + duration
-Line 3: git branch + dirty files + file change stats
-Line 4: tool usage table (App / MCP / Skills / Custom counts)
+Line 1: model name
+Line 2: git branch + dirty files + file change stats
+Line 3: rate-limit segments (when OAuth data is available)
 ```
 
 ## Important Implementation Details
 
-### 1. Context Display (NO label emoji prefix)
-The context segment renders as:
-```
-█▓▒░░░░░░░ 59% input:89k output:12k cache_r:45k cache_w:23k limit:200k
-```
-
-### 2. Gradient Bar Colors
+### 1. Gradient Bar Colors
 - Green (0-69%): Healthy usage
 - Yellow (70-89%): Warning
 - Red (90-100%): Danger
 
-### 3. Task ID Indexing
-- Claude Code uses **1-based task IDs** ("1", "2", "3")
-- Parser converts to **0-based array indices**
-- Bug fixed in v0.2.0
-
-### 4. Skill Tracking
-- Skills tracked by full name (e.g., "superpowers:using-git-worktrees")
-- Extracted from Skill tool's `input.skill` parameter
-- Bug fixed in v0.2.0
-
-### 5. CI Behavior
+### 2. CI Behavior
 CI **runs** on:
 - Go source changes (`*.go`)
 - Module changes (`go.mod`, `go.sum`)
@@ -373,7 +302,6 @@ CI **runs** on:
 
 CI **skips** on:
 - Documentation (`*.md`, `docs/**`)
-- Examples (`examples/**`)
 - Assets (`assets/**`)
 
 ## Test Coverage
@@ -382,7 +310,6 @@ CI **skips** on:
 Package          Coverage
 ─────────────────────────
 main             62%
-config           100%
 state            100%
 parser           85%
 segment          92%
@@ -398,8 +325,9 @@ Overall          ~85%
 
 ## Version History
 
-- **v0.1.0** - Initial release (basic segments, presets)
+- **v0.1.0** - Initial release (basic segments)
 - **v0.2.0** - Visual enhancements (themes, gradients, bug fixes)
+- **default-only** - Config file removed; `--theme` CLI flag; transcript parsing removed; OAuth always fetched
 
 ## Contributing
 

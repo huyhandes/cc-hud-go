@@ -13,13 +13,10 @@ A Go-based statusline tool for [Claude Code](https://code.claude.com) that displ
 
 ## Features
 
-- **Model & Context** — Model name, plan type, token usage with color-coded thresholds
-- **Rate Limits** — 5-hour and 7-day API usage tracking
-- **Cost & Duration** — Session cost (USD), duration, token speed
+- **Model** — Current Claude model name
+- **Caveman / Ponytail** — Mode badges when active
 - **Git** — Branch, dirty files, ahead/behind, file stats
-- **Tools** — Categorized usage (App / MCP / Skills / Custom)
-- **Tasks** — Completion progress (pending / in-progress / done)
-- **Agents** — Active agent name and current task
+- **Rate Limits** — 5-hour and 7-day API usage tracking (fetched live from the OAuth API)
 
 ## Quick Install
 
@@ -61,38 +58,32 @@ cc-hud-go --version
 
 ## Configuration
 
-Create `~/.claude/cc-hud-go/config.json`:
+There is no config file. The only knob is the `--theme` CLI flag.
+
+The tool ships opinionated defaults. Theme is selected with `--theme` (default `macchiato`; values `macchiato` / `mocha` / `frappe` / `latte`; unknown values fall back to `macchiato`). Wire it through your Claude Code statusline config:
 
 ```json
 {
-  "theme": "macchiato"
+  "statusline": {
+    "command": "cc-hud-go --theme mocha"
+  }
 }
 ```
 
-See [Configuration Reference](docs/CONFIG.md) for all options.
-
-## Themes
-
-4 [Catppuccin](https://github.com/catppuccin/catppuccin) themes: `macchiato` (default), `mocha`, `frappe`, `latte`.
-
-```json
-{ "theme": "mocha" }
-```
-
-See [Color Scheme Guide](docs/COLOR_SCHEME.md) for theme details and custom color overrides.
+The Catppuccin palette is defined in `theme/catppuccin.go`; that file is the source of truth for colors.
 
 ## Reference
 
 | Document | Description |
 |----------|-------------|
 | [Build Guide](docs/BUILD_GUIDE.md) | Install, build, test, release |
-| [Configuration Reference](docs/CONFIG.md) | All config options and presets |
-| [Color Scheme Guide](docs/COLOR_SCHEME.md) | Themes and color customization |
 | [Code Map](docs/CODEMAP.md) | Architecture and package dependencies |
+| [Project Status](docs/PROJECT_STATUS.md) | Current project status |
+| [ADRs](docs/adr/) | Architectural Decision Records |
 
 ## Architecture
 
-Composable segment system: each display element is an independent `Segment` implementing `Render(state, config) (string, error)`. State flows: stdin JSON → parser → state → segments → JSON output.
+Composable segment system: each display element is an independent `Segment` implementing `Render(state) (string, error)`. State flows: stdin JSON → parser → state → segments → JSON output.
 
 See [Code Map](docs/CODEMAP.md) for full package structure and dependency graph.
 
@@ -100,7 +91,7 @@ See [Code Map](docs/CODEMAP.md) for full package structure and dependency graph.
 
 1. Fork → feature branch → `just check` → PR
 2. New segments: `segment/<name>.go` + test + register in `segment/segment.go`
-3. See [CLAUDE.md](CLAUDE.md) for dev workflow
+3. See [AGENTS.md](AGENTS.md) for dev workflow
 
 ## License
 

@@ -5,12 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 )
 
 func TestFiveHourSegment(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 15.0
 
@@ -20,10 +18,7 @@ func TestFiveHourSegment(t *testing.T) {
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
+	output := seg.Render(s)
 
 	if !strings.Contains(output, "15%") {
 		t.Errorf("expected percentage in output, got '%s'", output)
@@ -40,15 +35,11 @@ func TestFiveHourSegment(t *testing.T) {
 }
 
 func TestFiveHourSegmentEmpty(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
+	output := seg.Render(s)
 
 	if output != "" {
 		t.Errorf("expected empty output with no 5h data, got '%s'", output)
@@ -56,7 +47,6 @@ func TestFiveHourSegmentEmpty(t *testing.T) {
 }
 
 func TestFiveHourSegmentHighUsage(t *testing.T) {
-	cfg := config.Default()
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 85.0
 
@@ -66,10 +56,7 @@ func TestFiveHourSegmentHighUsage(t *testing.T) {
 
 	seg := &FiveHourSegment{}
 
-	output, err := seg.Render(s, cfg)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
+	output := seg.Render(s)
 
 	if !strings.Contains(output, "85%") {
 		t.Errorf("expected percentage in output, got '%s'", output)
@@ -85,14 +72,8 @@ func TestFiveHourSegmentUsesGradientBar(t *testing.T) {
 	s := state.New()
 	s.RateLimits.FiveHourPercent = 45.0
 
-	cfg := config.Default()
-
 	seg := &FiveHourSegment{}
-	result, err := seg.Render(s, cfg)
-
-	if err != nil {
-		t.Fatalf("Render failed: %v", err)
-	}
+	result := seg.Render(s)
 
 	// Should contain gradient bar characters
 	hasGradient := strings.Contains(result, "█") ||
@@ -134,7 +115,6 @@ func TestFiveHourSegmentTimeFormatting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := config.Default()
 			s := state.New()
 			s.RateLimits.FiveHourPercent = 50.0
 
@@ -142,11 +122,7 @@ func TestFiveHourSegmentTimeFormatting(t *testing.T) {
 			s.RateLimits.FiveHourResetsAt = resetTime.Format(time.RFC3339)
 
 			seg := &FiveHourSegment{}
-			output, err := seg.Render(s, cfg)
-
-			if err != nil {
-				t.Fatalf("render failed: %v", err)
-			}
+			output := seg.Render(s)
 
 			if tt.expectHours && !strings.Contains(output, "h") {
 				t.Errorf("expected 'h' in output for %s, got '%s'", tt.name, output)

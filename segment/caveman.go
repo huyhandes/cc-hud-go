@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/state"
 	"github.com/huyhandes/cc-hud-go/style"
 )
@@ -16,12 +15,8 @@ type CavemanSegment struct{}
 
 func (c *CavemanSegment) ID() string { return "caveman" }
 
-func (c *CavemanSegment) Enabled(cfg *config.Config) bool {
-	return cfg.Display.Caveman
-}
-
-func (c *CavemanSegment) Render(_ *state.State, _ *config.Config) (string, error) {
-	return renderModeBadge(".caveman-active", "🦴", "CAVEMAN"), nil
+func (c *CavemanSegment) Render(_ *state.State) string {
+	return renderModeBadge(".caveman-active", "🦴", "CAVEMAN")
 }
 
 // renderModeBadge renders an "emoji LABEL:LEVEL" badge from a flag file under
