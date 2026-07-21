@@ -17,11 +17,7 @@ func TestModelSegment(t *testing.T) {
 		t.Errorf("expected ID 'model', got '%s'", seg.ID())
 	}
 
-	output, err := seg.Render(s)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
+	output := seg.Render(s)
 	if !strings.Contains(output, "claude-sonnet-4.5") {
 		t.Errorf("expected output to contain model name, got '%s'", output)
 	}
@@ -33,10 +29,7 @@ func TestModelSegmentEmpty(t *testing.T) {
 	s := state.New()
 	seg := &ModelSegment{}
 
-	output, err := seg.Render(s)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
+	output := seg.Render(s)
 	if output != "" {
 		t.Errorf("expected empty output with no model name, got '%s'", output)
 	}

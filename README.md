@@ -27,7 +27,7 @@ sudo mv cc-hud-go-darwin-arm64 /usr/local/bin/cc-hud-go
 
 # macOS (Intel)
 curl -L https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-darwin-amd64.tar.gz | tar xz
-sudo mv cc-hud-go-darwin-amd /usr/local/bin/cc-hud-go
+sudo mv cc-hud-go-darwin-amd64 /usr/local/bin/cc-hud-go
 
 # Linux (amd64)
 curl -L https://github.com/huyhandes/cc-hud-go/releases/latest/download/cc-hud-go-linux-amd64.tar.gz | tar xz

@@ -15,8 +15,8 @@ type CavemanSegment struct{}
 
 func (c *CavemanSegment) ID() string { return "caveman" }
 
-func (c *CavemanSegment) Render(_ *state.State) (string, error) {
-	return renderModeBadge(".caveman-active", "🦴", "CAVEMAN"), nil
+func (c *CavemanSegment) Render(_ *state.State) string {
+	return renderModeBadge(".caveman-active", "🦴", "CAVEMAN")
 }
 
 // renderModeBadge renders an "emoji LABEL:LEVEL" badge from a flag file under

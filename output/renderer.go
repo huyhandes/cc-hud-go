@@ -20,15 +20,16 @@ func Render(s *state.State) (string, error) {
 
 func renderMultiLine(s *state.State) (string, error) {
 	var lines []string
-	segs := segment.ByID()
 
+	// renderSeg looks up a segment by ID across All() and renders it.
+	// N=6, so a linear scan is cheaper than allocating a map per tick.
 	renderSeg := func(id string) string {
-		seg, ok := segs[id]
-		if !ok {
-			return ""
+		for _, seg := range segment.All() {
+			if seg.ID() == id {
+				return seg.Render(s)
+			}
 		}
-		text, _ := seg.Render(s)
-		return text
+		return ""
 	}
 
 	// Line 1: Model Context Size | Context Bar | 5h Limit | 7d Limit

@@ -13,11 +13,7 @@ func TestRateLimitSegment(t *testing.T) {
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
+	output := seg.Render(s)
 	if !strings.Contains(output, "75%") {
 		t.Errorf("expected percentage in output, got '%s'", output)
 	}
@@ -28,11 +24,7 @@ func TestRateLimitSegmentEmpty(t *testing.T) {
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
+	output := seg.Render(s)
 	if output != "" {
 		t.Errorf("expected empty output with no rate limit data, got '%s'", output)
 	}
@@ -44,11 +36,7 @@ func TestRateLimitSegmentHighUsage(t *testing.T) {
 
 	seg := &RateLimitSegment{}
 
-	output, err := seg.Render(s)
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
+	output := seg.Render(s)
 	if !strings.Contains(output, "85%") {
 		t.Errorf("expected percentage in output, got '%s'", output)
 	}
@@ -59,11 +47,7 @@ func TestRateLimitUsesGradientBar(t *testing.T) {
 	s.RateLimits.SevenDayPercent = 67
 
 	seg := &RateLimitSegment{}
-	result, err := seg.Render(s)
-
-	if err != nil {
-		t.Fatalf("Render failed: %v", err)
-	}
+	result := seg.Render(s)
 
 	// Should contain gradient bar characters
 	hasGradient := strings.Contains(result, "█") ||

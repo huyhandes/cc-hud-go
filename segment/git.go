@@ -14,9 +14,9 @@ func (g *GitSegment) ID() string {
 	return "git"
 }
 
-func (g *GitSegment) Render(s *state.State) (string, error) {
+func (g *GitSegment) Render(s *state.State) string {
 	if s.Git.Branch == "" {
-		return "", nil
+		return ""
 	}
 
 	var parts []string
@@ -61,5 +61,5 @@ func (g *GitSegment) Render(s *state.State) (string, error) {
 		parts = append(parts, delStyle.Render(fmt.Sprintf("-%d", s.Git.Deleted)))
 	}
 
-	return strings.Join(parts, " "), nil
+	return strings.Join(parts, " ")
 }

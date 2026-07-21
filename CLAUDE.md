@@ -2,6 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+
 ## Project Overview
 
 `cc-hud-go` is a Go-based statusline tool for Claude Code that displays helpful information about the current Claude Code session. It integrates with the Claude Code statusline API (https://code.claude.com/docs/en/statusline) to provide rich, real-time information.
@@ -118,30 +119,20 @@ just lint
 
 ```
 cc-hud-go/
-├── config/          # Configuration management with presets
-│   ├── config.go
-│   └── config_test.go
 ├── state/           # Session state tracking and derived fields
 │   ├── state.go
 │   └── state_test.go
-├── parser/          # Dual input parsing (split into 4 files)
+├── parser/          # Stdin JSON parsing (single concern)
 │   ├── stdin.go              # StdinData type, ParseStdin()
-│   ├── transcript.go         # TranscriptLine types, ParseTranscript*()
-│   ├── task.go               # TaskTracker, task tool processing
-│   ├── tool.go               # ToolCategory, CategorizeTool()
-│   ├── stdin_test.go
-│   ├── transcript_test.go
-│   └── tasks_test.go
+│   └── stdin_test.go
 ├── segment/         # Modular display segments
 │   ├── segment.go   # Segment interface, All(), ByID() registry
 │   ├── model.go     # Model name display
-│   ├── context.go   # Token usage and context window
+│   ├── caveman.go   # Caveman mode badge (self-gating)
+│   ├── ponytail.go  # Ponytail mode badge (self-gating)
 │   ├── git.go       # Git branch, status, file stats
-│   ├── cost.go      # Cost tracking and duration
-│   ├── tools.go     # Tool usage categorization
-│   ├── tasks.go     # Task progress tracking
-│   ├── agent.go     # Active agent info
-│   ├── ratelimit.go # API rate limit monitoring (5h + 7d)
+│   ├── fivehour.go  # 5-hour rate limit tracking
+│   ├── ratelimit.go # 7-day API rate limit tracking
 │   └── *_test.go
 ├── output/          # Output renderer for statusline API
 │   ├── renderer.go
@@ -149,12 +140,10 @@ cc-hud-go/
 ├── format/          # Shared formatting helpers (DRY)
 │   ├── format.go    # Tokens(), Duration(), Cost()
 │   └── format_test.go
-├── style/           # Lipgloss styling (split into 3 files)
+├── style/           # Lipgloss styling (split per file)
 │   ├── style.go     # Colors, Init(), ThresholdColor()
 │   ├── gradient.go  # RenderGradientBar(), color interpolation
-│   ├── table.go     # RenderTable() box-drawing tables
-│   ├── gradient_test.go
-│   └── table_test.go
+│   └── gradient_test.go
 ├── theme/           # Theme system (Catppuccin variants)
 │   ├── theme.go
 │   ├── catppuccin.go
@@ -163,16 +152,22 @@ cc-hud-go/
 │   ├── version.go
 │   └── version_test.go
 ├── internal/
-│   └── git/         # Git integration via command execution
-│       ├── git.go
-│       └── git_test.go
+│   ├── git/         # Git integration via command execution
+│   │   ├── git.go
+│   │   └── git_test.go
+│   └── oauth/       # OAuth helpers (always fetched, no stdin fallback)
+│       ├── oauth.go
+│       └── oauth_test.go
+├── cmd/             # Developer utility binaries
+│   ├── test-gradient/
+│   └── test-oauth/
 ├── testdata/        # Test fixtures and sample data
-├── docs/            # Documentation and planning
-│   ├── plans/       # Design and implementation plans
+├── docs/            # Documentation
+│   ├── adr/         # Architectural Decision Records
 │   ├── CODEMAP.md
-│   ├── COLOR_SCHEME.md
-│   ├── MANUAL_TEST.md
-│   └── TEST_RESULTS.md
+│   ├── PROJECT_STATUS.md
+│   ├── BUILD_GUIDE.md
+│   └── plans/
 ├── assets/          # Screenshots and preview images
 ├── main.go          # Application entry point
 ├── main_test.go     # Main package tests
@@ -180,6 +175,12 @@ cc-hud-go/
 ├── justfile         # Build and development commands
 └── go.mod
 ```
+
+Notes:
+- No `config/` directory. Defaults are hardcoded where they are used; the only user-facing knob is the `--theme` CLI flag. See [docs/adr/0001-default-only-mode.md](docs/adr/0001-default-only-mode.md) and [docs/adr/0002-theme-via-cli-flag.md](docs/adr/0002-theme-via-cli-flag.md).
+- No `examples/` directory. There is no config file to demonstrate.
+- `parser/` only contains `stdin.go` + `stdin_test.go`. Transcript JSONL parsing is gone. See [docs/adr/0004-no-transcript-parsing.md](docs/adr/0004-no-transcript-parsing.md).
+- `style/` has no `table.go`. `segment/` has no `tools.go`/`agent.go`/`tasks.go`/`context.go`/`cost.go`.
 
 ### Claude Code Statusline Integration
 
@@ -190,96 +191,61 @@ The tool implements the Claude Code statusline protocol, which expects:
 
 **Data Flow:**
 1. Read JSON session data from stdin (provided by Claude Code)
-2. Parse transcript file for tool usage tracking
-3. Fetch git information from current repository
+2. Fetch git information from current repository
+3. Fetch OAuth rate-limit data on every refresh (no stdin fallback). See [docs/adr/0003-always-fetch-oauth.md](docs/adr/0003-always-fetch-oauth.md).
 4. Update state with derived fields (percentages, durations)
-5. Render enabled segments based on configuration
+5. Render segments (self-gating: a segment returns `""` to hide itself)
 6. Output formatted JSON to stdout
 
 ### Key Components
 
-**Segments** - Modular display components implementing the `Segment` interface:
-```go
-type Segment interface {
-    ID() string
-    Render(s *state.State, cfg *config.Config) (string, error)
-    Enabled(cfg *config.Config) bool
-}
-```
-
-Available segments (accessed via `All()` or `ByID()` map):
+**Segments** - Modular display components implementing the `Segment` interface. Surviving segments:
 - **ModelSegment** - Current Claude model name
-- **ContextSegment** - Token usage with color-coded thresholds
+- **CavemanSegment** - Caveman mode badge (renders only when `.caveman-active` flag file exists)
+- **PonytailSegment** - Ponytail mode badge (renders only when `.ponytail-active` flag file exists)
 - **GitSegment** - Branch, dirty files, ahead/behind, file stats
-- **CostSegment** - Cost tracking, duration
-- **ToolsSegment** - Tool usage categorized by type (App/MCP/Skills/Custom)
-- **TasksSegment** - Task completion progress
-- **AgentSegment** - Active agent name and current task
 - **FiveHourSegment** - 5-hour rate limit tracking
 - **RateLimitSegment** - 7-day API usage tracking
+
+Segments self-gate by returning an empty string when they have nothing to show; that is the only on/off mechanism.
 
 **Format Package** - Shared formatting helpers eliminating duplication:
 - `format.Tokens()` - Token count formatting (e.g. 5000 -> "5k")
 - `format.Duration()` - Milliseconds to human-readable duration
 - `format.Cost()` - USD cost formatting
 
-**State Management** - Centralized session state with automatic derived field calculation:
-- Context percentage calculation
-- Session duration tracking
-- Tool usage categorization
-- Task progress aggregation
+**State Management** - Centralized session state with automatic derived field calculation.
 
-**Parser System** - Split into 4 files by concern:
+**Parser System** - Single concern:
 - `stdin.go` - Session data from Claude Code (JSON)
-- `transcript.go` - Tool usage tracking from JSONL file
-- `task.go` - Task state management (TodoWrite/TaskCreate/TaskUpdate)
-- `tool.go` - Tool categorization (App/Internal/Custom/MCP/Skill)
 
-**Style System** - Semantic color palette using Lipgloss (split into 3 files):
+**Style System** - Semantic color palette using Lipgloss:
 - `style.go` - Theme integration, ThresholdColor() helper
 - `gradient.go` - Gradient progress bars with smooth color transitions
-- `table.go` - Box-drawing table rendering
-- 13 semantic colors with TrueColor support
 
-**Configuration** - Three preset modes with granular control:
-- **Full** - All features enabled
-- **Essential** - Core metrics only
-- **Minimal** - Minimal information
-- Per-segment enable/disable options
-- Customizable thresholds and display formats
+**Theme System** - 4 Catppuccin variants. Source of truth: `theme/catppuccin.go`. Selected via the `--theme` CLI flag (default `macchiato`; values `macchiato`/`mocha`/`frappe`/`latte`; unknown values fall back to macchiato).
+
+**Configuration** - No config file. The only user-facing knob is `--theme`. Defaults are hardcoded.
 
 ### Design Principles
 
 Following the Charm ecosystem style:
 - Elegant, minimal terminal UI with Lipgloss styling
 - Composable segment architecture
-- Clean separation between state, rendering, and configuration
-- Graceful degradation (missing config → defaults)
-- Comprehensive test coverage with TDD approach
+- Clean separation between state, rendering, and output
+- Opinionated defaults; customization via CLI flags only
+- Self-gating segments: empty-string return is the on/off mechanism
 - Semantic color system with meaningful associations
 
 ## Claude Code Statusline API
 
-The tool displays comprehensive session information including:
+The tool displays session information including:
 
-**Core Metrics:**
+**Core:**
 - Current model being used (e.g., claude-sonnet-4.5)
-- Plan type (Free, Pro, Team, Enterprise)
-- Token usage statistics (used/total, percentage, color-coded thresholds)
-- Context window tracking (input, output, cache read, cache create)
-
-**Development Insights:**
-- Git branch, dirty files, ahead/behind status
-- File statistics (added, modified, deleted)
-- Tool usage categorization (App tools, MCP tools, Skills, Custom)
-- Task progress tracking (pending, in-progress, completed)
-- Active agent name and current task description
-
-**Session Tracking:**
-- Cost tracking in USD
-- Session duration and API duration
-- Code changes (lines added/removed)
-- API rate limits (5-hour and 7-day)
+- Git branch, dirty files, ahead/behind status, file statistics
+- API rate limits (5-hour and 7-day), fetched live from the OAuth API
+- Mode badges (caveman / ponytail) when active
 
 Refer to the official docs for the complete API: https://code.claude.com/docs/en/statusline
 
@@ -287,14 +253,12 @@ Refer to the official docs for the complete API: https://code.claude.com/docs/en
 
 **Running Tests:**
 - Unit tests for all segments (`segment/*_test.go`)
-- Parser tests for stdin and transcript parsing (`parser/*_test.go`)
+- Parser tests for stdin parsing (`parser/*_test.go`)
 - State management tests (`state/state_test.go`)
-- Config validation tests (`config/config_test.go`)
 - Integration tests (`integration_test.go`)
 
 **Test Data:**
 - Sample session data in `testdata/`
-- Fixture files for transcript parsing
 - Mock git repositories for testing
 
 **Code Quality:**
@@ -305,11 +269,11 @@ Refer to the official docs for the complete API: https://code.claude.com/docs/en
 
 ## Contributing
 
-When adding new features:
+When adding features:
 
-1. **New Segments** - Create in `segment/<name>.go` with tests
+1. **New Segments** - Create in `segment/<name>.go` with tests; self-gate via empty-string return
 2. **State Fields** - Add to appropriate struct in `state/state.go`
-3. **Configuration** - Update `config/config.go` if needed
+3. **New user-facing knobs** - Prefer a CLI flag over a config key (see ADRs 0001 and 0002)
 4. **Styling** - Use semantic colors from `style/style.go`
 5. **Tests** - Write tests before implementation (TDD)
-6. **Documentation** - Update both CLAUDE.md and README.md
+6. **Documentation** - Update both AGENTS.md and README.md

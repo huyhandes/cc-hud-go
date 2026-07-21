@@ -248,14 +248,12 @@ Available segments (via `All()` or `ByID()` registry):
 
 ### Output Rendering
 - `output/renderer.go`
-  - **renderMultiLine()** - Custom multi-line layout (uses ByID() map)
-  - **renderSingleLine()** - Compact horizontal layout
+  - **renderMultiLine()** - Custom multi-line layout (iterates segment.All())
   - **renderFileChanges()** - +/- line changes
 
 ### Styling
 - `style/style.go` - Colors, Init(), ThresholdColor(), GetRenderer()
 - `style/gradient.go` - RenderGradientBar(), color interpolation
-- `style/table.go` - RenderTable() box-drawing tables
 
 ### Themes
 - `theme/catppuccin.go`
