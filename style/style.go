@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/huyhandes/cc-hud-go/theme"
-	"github.com/muesli/termenv"
 )
 
 var (
@@ -26,24 +25,13 @@ var (
 	ColorBright     lipgloss.Color
 	ColorInfo       lipgloss.Color
 
-	// Pre-configured styles
-	ModelStyle     lipgloss.Style
-	ContextStyle   lipgloss.Style
-	GitStyle       lipgloss.Style
-	CostStyle      lipgloss.Style
-	ToolsStyle     lipgloss.Style
-	AgentStyle     lipgloss.Style
-	SeparatorStyle lipgloss.Style
-
-	// Progress bar styles
-	ProgressGood    lipgloss.Style
-	ProgressWarning lipgloss.Style
-	ProgressDanger  lipgloss.Style
+	// Pre-configured styles that are actually used
+	ModelStyle lipgloss.Style
+	AgentStyle lipgloss.Style
 )
 
 func init() {
-	renderer = lipgloss.NewRenderer(os.Stdout, termenv.WithProfile(termenv.TrueColor))
-	renderer.SetColorProfile(termenv.TrueColor)
+	renderer = lipgloss.NewRenderer(os.Stdout)
 }
 
 // Init initializes styles with the given theme
@@ -63,31 +51,12 @@ func Init(th theme.Theme) {
 	ColorInfo = th.GetColor("info")
 
 	ModelStyle = renderer.NewStyle().Foreground(ColorPrimary).Bold(true)
-	ContextStyle = renderer.NewStyle().Foreground(ColorInfo)
-	GitStyle = renderer.NewStyle().Foreground(ColorHighlight)
-	CostStyle = renderer.NewStyle().Foreground(ColorAccent)
-	ToolsStyle = renderer.NewStyle().Foreground(ColorSuccess)
 	AgentStyle = renderer.NewStyle().Foreground(ColorPrimary).Italic(true)
-	SeparatorStyle = renderer.NewStyle().Foreground(ColorMuted)
-
-	ProgressGood = renderer.NewStyle().Foreground(ColorSuccess)
-	ProgressWarning = renderer.NewStyle().Foreground(ColorWarning)
-	ProgressDanger = renderer.NewStyle().Foreground(ColorDanger)
 }
 
 // GetRenderer returns the global renderer
 func GetRenderer() *lipgloss.Renderer {
 	return renderer
-}
-
-// Separator renders a styled separator
-func Separator() string {
-	return SeparatorStyle.Render("│")
-}
-
-// Icon renders a styled icon
-func Icon(icon string, s lipgloss.Style) string {
-	return s.Render(icon)
 }
 
 // ThresholdColor returns a color based on percentage thresholds (green/yellow/red)

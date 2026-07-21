@@ -51,7 +51,7 @@ func TestRenderGradientBar(t *testing.T) {
 // Helper to strip ANSI codes for testing
 func stripAnsi(s string) string {
 	// Simple strip for testing - remove escape sequences
-	result := ""
+	var result strings.Builder
 	inEscape := false
 	for _, r := range s {
 		if r == '\x1b' {
@@ -59,10 +59,10 @@ func stripAnsi(s string) string {
 		} else if inEscape && r == 'm' {
 			inEscape = false
 		} else if !inEscape {
-			result += string(r)
+			result.WriteString(string(r))
 		}
 	}
-	return result
+	return result.String()
 }
 
 // Mock theme for testing

@@ -659,7 +659,7 @@ func TestParseTaskDeleteIndexAdjustment(t *testing.T) {
 	// Delete task B (index 1)
 	block := ContentBlock{
 		Name:  "TaskUpdate",
-		Input: map[string]interface{}{"taskId": "b", "status": "deleted"},
+		Input: map[string]any{"taskId": "b", "status": "deleted"},
 	}
 	processTaskTool(block, tracker)
 
@@ -684,7 +684,7 @@ func TestParseTaskDeleteIndexAdjustment(t *testing.T) {
 func TestResolveTaskID(t *testing.T) {
 	tests := []struct {
 		name  string
-		input interface{}
+		input any
 		want  string
 	}{
 		{"string", "abc", "abc"},
@@ -790,15 +790,6 @@ func TestParseTaskUpdate1BasedTaskID(t *testing.T) {
 	if s.Tasks.Pending != 2 {
 		t.Errorf("Expected 2 pending tasks, got %d", s.Tasks.Pending)
 	}
-	if len(s.Tasks.Details) != 3 {
-		t.Fatalf("Expected 3 total tasks, got %d", len(s.Tasks.Details))
-	}
-	if s.Tasks.Details[0].Status != "completed" {
-		t.Errorf("Expected first task (index 0) to be completed, got %s", s.Tasks.Details[0].Status)
-	}
-	if s.Tasks.Details[1].Status != "pending" {
-		t.Errorf("Expected second task (index 1) to be pending, got %s", s.Tasks.Details[1].Status)
-	}
 
 	// Update task with taskId="3" (should update third task at index 2)
 	updateLine3 := `{
@@ -823,8 +814,5 @@ func TestParseTaskUpdate1BasedTaskID(t *testing.T) {
 	}
 	if s.Tasks.Pending != 1 {
 		t.Errorf("Expected 1 pending task, got %d", s.Tasks.Pending)
-	}
-	if s.Tasks.Details[2].Status != "completed" {
-		t.Errorf("Expected third task (index 2) to be completed, got %s", s.Tasks.Details[2].Status)
 	}
 }

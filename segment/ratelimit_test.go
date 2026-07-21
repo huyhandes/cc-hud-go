@@ -44,7 +44,6 @@ func TestRateLimitSegmentEmpty(t *testing.T) {
 
 func TestRateLimitSegmentHighUsage(t *testing.T) {
 	cfg := config.Default()
-	cfg.SevenDayThreshold = 80
 	s := state.New()
 	s.RateLimits.SevenDayUsed = 85
 	s.RateLimits.SevenDayTotal = 100

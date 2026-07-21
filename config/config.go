@@ -2,23 +2,18 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 )
 
 // Config holds all configuration options
 type Config struct {
-	Theme             string
-	Colors            map[string]string
-	Preset            string
-	LineLayout        string
-	PathLevels        int
-	SevenDayThreshold int
-	Display           DisplayConfig
-	Git               GitConfig
-	Tools             ToolsConfig
-	Tables            TableConfig
+	Theme      string
+	Colors     map[string]string
+	LineLayout string
+	Display    DisplayConfig
+	Git        GitConfig
+	Tools      ToolsConfig
 }
 
 type DisplayConfig struct {
@@ -43,27 +38,16 @@ type GitConfig struct {
 }
 
 type ToolsConfig struct {
-	GroupByCategory bool
-	ShowTopN        int
-	ShowSkills      bool
-	ShowMCP         bool
+	ShowSkills bool
+	ShowMCP    bool
 }
 
-type TableConfig struct {
-	ToolsThreshold   int `json:"toolsTableThreshold"`
-	TasksThreshold   int `json:"tasksTableThreshold"`
-	ContextThreshold int `json:"contextTableThreshold"`
-}
-
-// Default returns a config with sensible defaults (full preset)
+// Default returns the hardcoded default config
 func Default() *Config {
 	return &Config{
-		Theme:             "macchiato",
-		Colors:            make(map[string]string),
-		Preset:            "full",
-		LineLayout:        "expanded",
-		PathLevels:        2,
-		SevenDayThreshold: 80,
+		Theme:      "macchiato",
+		Colors:     make(map[string]string),
+		LineLayout: "expanded",
 		Display: DisplayConfig{
 			Model:      true,
 			Context:    true,
@@ -84,57 +68,10 @@ func Default() *Config {
 			ShowFileStats:   true,
 		},
 		Tools: ToolsConfig{
-			GroupByCategory: true,
-			ShowTopN:        5,
-			ShowSkills:      true,
-			ShowMCP:         true,
-		},
-		Tables: TableConfig{
-			ToolsThreshold:   999, // Always use lipgloss inline view
-			TasksThreshold:   999, // Always use lipgloss inline view
-			ContextThreshold: 999,
+			ShowSkills: true,
+			ShowMCP:    true,
 		},
 	}
-}
-
-// Essential returns a config with core metrics only
-func Essential() *Config {
-	cfg := Default()
-	cfg.Preset = "essential"
-	cfg.LineLayout = "compact"
-	cfg.Display.Tools = false
-	cfg.Display.Agents = false
-	cfg.Display.RateLimits = false
-	cfg.Display.Duration = false
-	return cfg
-}
-
-// Minimal returns a config with minimal information
-func Minimal() *Config {
-	cfg := Default()
-	cfg.Preset = "minimal"
-	cfg.LineLayout = "compact"
-	cfg.PathLevels = 1
-	cfg.Display.Git = false
-	cfg.Display.Tools = false
-	cfg.Display.Agents = false
-	cfg.Display.Tasks = false
-	cfg.Display.RateLimits = false
-	cfg.Display.Duration = false
-	return cfg
-}
-
-// Validate checks config values are within valid ranges
-func (c *Config) Validate() error {
-	if c.PathLevels < 1 || c.PathLevels > 3 {
-		return errors.New("pathLevels must be between 1 and 3")
-	}
-
-	if c.SevenDayThreshold < 0 || c.SevenDayThreshold > 100 {
-		return errors.New("sevenDayThreshold must be between 0 and 100")
-	}
-
-	return nil
 }
 
 // LoadFromFile loads config from JSON file, returns defaults on any error
@@ -158,12 +95,6 @@ func LoadFromFile(path string) (*Config, error) {
 	if err := json.Unmarshal(data, cfg); err != nil {
 		// Invalid JSON: log but continue with defaults
 		fmt.Fprintf(os.Stderr, "warning: failed to parse config: %v\n", err)
-		return Default(), nil
-	}
-
-	// Validate and fix invalid values
-	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(os.Stderr, "warning: invalid config values, using defaults: %v\n", err)
 		return Default(), nil
 	}
 

@@ -1,7 +1,6 @@
 package version
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -39,43 +38,4 @@ func getGitVersion() string {
 	}
 
 	return version
-}
-
-// GetDetailed returns detailed version information
-func GetDetailed() string {
-	v := Get()
-	gitCommit := getGitCommit()
-	gitDirty := isGitDirty()
-
-	info := fmt.Sprintf("cc-hud-go %s", v)
-
-	if gitCommit != "" {
-		info += fmt.Sprintf(" (commit: %s", gitCommit)
-		if gitDirty {
-			info += ", dirty"
-		}
-		info += ")"
-	}
-
-	return info
-}
-
-// getGitCommit returns the current git commit hash
-func getGitCommit() string {
-	cmd := exec.Command("git", "rev-parse", "--short", "HEAD")
-	output, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(string(output))
-}
-
-// isGitDirty checks if the working directory has uncommitted changes
-func isGitDirty() bool {
-	cmd := exec.Command("git", "status", "--porcelain")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	return len(strings.TrimSpace(string(output))) > 0
 }

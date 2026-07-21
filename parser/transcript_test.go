@@ -34,7 +34,7 @@ func TestParseTranscriptLine(t *testing.T) {
 	line := `{"type":"tool_use","name":"Read","id":"tool_123"}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 
 	if err != nil {
 		t.Fatalf("ParseTranscriptLine failed: %v", err)
@@ -49,7 +49,7 @@ func TestParseTranscriptLineMCP(t *testing.T) {
 	line := `{"type":"tool_use","name":"mcp__claude_ai_Atlassian__getConfluencePage"}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 
 	if err != nil {
 		t.Fatalf("ParseTranscriptLine failed: %v", err)
@@ -87,7 +87,7 @@ func TestParseTranscriptLineSkillTracking(t *testing.T) {
 	}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 
 	if err != nil {
 		t.Fatalf("ParseTranscriptLine failed: %v", err)
@@ -149,7 +149,7 @@ func TestParseTranscriptLineSkillTrackingMultiple(t *testing.T) {
 
 	s := state.New()
 	for _, line := range lines {
-		_ = ParseTranscriptLine([]byte(line), s)
+		_ = ParseTranscriptLineWithTracker([]byte(line), s, nil)
 	}
 
 	// Verify brainstorming was called twice
@@ -180,7 +180,7 @@ func TestParseTranscriptLineSkillTrackingFallback(t *testing.T) {
 	}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 
 	if err != nil {
 		t.Fatalf("ParseTranscriptLine failed: %v", err)
@@ -197,7 +197,7 @@ func TestParseTranscriptLineSkillTrackingFallback(t *testing.T) {
 
 func TestParseTranscriptLineInvalidJSON(t *testing.T) {
 	s := state.New()
-	err := ParseTranscriptLine([]byte(`not json`), s)
+	err := ParseTranscriptLineWithTracker([]byte(`not json`), s, nil)
 	if err == nil {
 		t.Error("expected error for invalid JSON")
 	}
@@ -206,7 +206,7 @@ func TestParseTranscriptLineInvalidJSON(t *testing.T) {
 func TestParseTranscriptLineNoToolUse(t *testing.T) {
 	line := `{"type":"text","name":"test"}`
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -220,7 +220,7 @@ func TestParseTranscriptLineMCPMalformed(t *testing.T) {
 	// MCP tool with < 3 parts should not panic
 	line := `{"type":"tool_use","name":"mcp__short"}`
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestParseTranscriptLineMessageWithMCP(t *testing.T) {
 	}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -272,7 +272,7 @@ func TestParseTranscriptLineMessageWithMCPMalformed(t *testing.T) {
 	}`
 
 	s := state.New()
-	err := ParseTranscriptLine([]byte(line), s)
+	err := ParseTranscriptLineWithTracker([]byte(line), s, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

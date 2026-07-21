@@ -41,7 +41,7 @@ func normalizeTaskStatus(status string) string {
 func processTaskTool(block ContentBlock, tracker *TaskTracker) {
 	switch block.Name {
 	case "TodoWrite":
-		todos, ok := block.Input["todos"].([]interface{})
+		todos, ok := block.Input["todos"].([]any)
 		if !ok {
 			return
 		}
@@ -50,7 +50,7 @@ func processTaskTool(block ContentBlock, tracker *TaskTracker) {
 		tracker.TaskIDMap = make(map[string]int)
 
 		for _, t := range todos {
-			todo, ok := t.(map[string]interface{})
+			todo, ok := t.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -161,7 +161,7 @@ func processTaskTool(block ContentBlock, tracker *TaskTracker) {
 }
 
 // resolveTaskID extracts task ID from various input types
-func resolveTaskID(taskID interface{}) string {
+func resolveTaskID(taskID any) string {
 	switch v := taskID.(type) {
 	case string:
 		return v
@@ -179,14 +179,8 @@ func updateStateFromTasks(tracker *TaskTracker, s *state.State) {
 	s.Tasks.Pending = 0
 	s.Tasks.InProgress = 0
 	s.Tasks.Completed = 0
-	s.Tasks.Details = make([]state.Task, 0, len(tracker.Tasks))
 
 	for _, task := range tracker.Tasks {
-		s.Tasks.Details = append(s.Tasks.Details, state.Task{
-			Subject: task.Content,
-			Status:  task.Status,
-		})
-
 		switch task.Status {
 		case "pending":
 			s.Tasks.Pending++

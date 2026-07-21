@@ -65,8 +65,7 @@ Create `~/.claude/cc-hud-go/config.json`:
 
 ```json
 {
-  "theme": "macchiato",
-  "preset": "full"
+  "theme": "macchiato"
 }
 ```
 

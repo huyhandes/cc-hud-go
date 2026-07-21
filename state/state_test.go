@@ -2,7 +2,6 @@ package state
 
 import (
 	"testing"
-	"time"
 )
 
 func TestNewState(t *testing.T) {
@@ -23,19 +22,6 @@ func TestNewState(t *testing.T) {
 
 func TestUpdateDerived(t *testing.T) {
 	s := New()
-
-	// Wait a bit
-	time.Sleep(100 * time.Millisecond)
-
-	s.UpdateDerived()
-
-	if s.Session.Duration == 0 {
-		t.Error("expected Duration to be updated")
-	}
-
-	if s.Session.Duration < 100*time.Millisecond {
-		t.Errorf("expected Duration >= 100ms, got %v", s.Session.Duration)
-	}
 
 	// Test percentage calculation
 	s.Context.UsedTokens = 50

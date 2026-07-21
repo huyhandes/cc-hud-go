@@ -42,7 +42,7 @@ func TestRender(t *testing.T) {
 }
 
 func TestRenderWithDisabledSegments(t *testing.T) {
-	cfg := config.Minimal()
+	cfg := config.Default()
 	s := state.New()
 	s.Model.Name = "Sonnet 4.5"
 
@@ -218,8 +218,6 @@ func TestRenderMultiLineWithRateLimits(t *testing.T) {
 	s.Model.Name = "Test"
 	s.Context.UsedTokens = 5000
 	s.Context.TotalTokens = 200000
-	s.RateLimits.HourlyUsed = 10
-	s.RateLimits.HourlyTotal = 50
 	s.RateLimits.SevenDayUsed = 300
 	s.RateLimits.SevenDayTotal = 1000
 
