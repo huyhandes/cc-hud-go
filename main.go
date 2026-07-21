@@ -38,11 +38,6 @@ OPTIONS:
 CONFIGURATION:
     Config file: ~/.claude/cc-hud-go/config.json
 
-    Available presets:
-        full       - All features enabled (default)
-        essential  - Core metrics only
-        minimal    - Minimal information
-
     See https://github.com/huyhandes/cc-hud-go#configuration for full
     configuration options.
 

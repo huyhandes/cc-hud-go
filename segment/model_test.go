@@ -12,7 +12,6 @@ func TestModelSegment(t *testing.T) {
 	cfg := config.Default()
 	s := state.New()
 	s.Model.Name = "claude-sonnet-4.5"
-	s.Model.PlanType = "Pro"
 
 	seg := &ModelSegment{}
 

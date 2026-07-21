@@ -23,15 +23,15 @@ type MessageWrapper struct {
 
 // ContentBlock represents a single content block (tool_use, text, etc.)
 type ContentBlock struct {
-	Type  string                 `json:"type"`
-	ID    string                 `json:"id"`
-	Name  string                 `json:"name"`
-	Input map[string]interface{} `json:"input"`
+	Type  string         `json:"type"`
+	ID    string         `json:"id"`
+	Name  string         `json:"name"`
+	Input map[string]any `json:"input"`
 }
 
 // applyToolUse records a single tool invocation into state.
 // input may be nil when parsing top-level tool_use lines (no input available).
-func applyToolUse(s *state.State, name string, input map[string]interface{}) {
+func applyToolUse(s *state.State, name string, input map[string]any) {
 	category := CategorizeTool(name)
 	switch category {
 	case CategoryApp:
@@ -67,11 +67,6 @@ func applyToolUse(s *state.State, name string, input map[string]interface{}) {
 		s.Tools.AppTools["Skill"]++
 		s.Tools.LastUsed["app"] = "Skill"
 	}
-}
-
-// ParseTranscriptLine parses a single JSONL line and updates state
-func ParseTranscriptLine(data []byte, s *state.State) error {
-	return ParseTranscriptLineWithTracker(data, s, nil)
 }
 
 // ParseTranscriptLineWithTracker parses a single JSONL line with task tracking

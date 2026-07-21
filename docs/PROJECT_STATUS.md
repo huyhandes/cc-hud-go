@@ -17,7 +17,7 @@ cc-hud-go is a fully functional Go-based statusline tool for Claude Code with co
 ### ✅ Completed Modules
 
 #### Core Components
-- **config/** - Configuration management with 3 presets (Full/Essential/Minimal)
+- **config/** - Hardcoded default configuration via `Default()`
 - **state/** - Session state tracking with automatic derived fields
 - **parser/** - Dual parsing system (stdin JSON + transcript JSONL)
 - **segment/** - 8 modular display segments
@@ -44,20 +44,17 @@ All segments implement the `Segment` interface:
 
 ### Configuration Options
 
-#### Presets
-- **full** - All features enabled (default)
-- **essential** - Core metrics only
-- **minimal** - Minimal information
+Hardcoded defaults via `config.Default()`. All features enabled.
 
 #### Display Controls
 All segments can be individually enabled/disabled via `Display` config:
-- model, path, context, git, tools, agents, tasks, rateLimits, duration, speed
+- model, context, git, tools, agents, tasks, rateLimits, duration
 
 #### Git Options
 - showBranch, showDirty, showAheadBehind, showFileStats
 
 #### Tools Options
-- groupByCategory, showTopN, showSkills, showMCP
+- showSkills, showMCP
 
 ## Test Coverage
 

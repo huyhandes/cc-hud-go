@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/huyhandes/cc-hud-go/config"
@@ -12,42 +13,10 @@ import (
 )
 
 // Render generates plain text output for the statusline
-// Returns plain text that Claude Code will display
 func Render(s *state.State, cfg *config.Config) (string, error) {
 	// Update derived fields before rendering
 	s.UpdateDerived()
-
-	// Check if multi-line layout is requested
-	if cfg.LineLayout == "multiline" || cfg.LineLayout == "expanded" {
-		return renderMultiLine(s, cfg)
-	}
-
-	// Single line layout (original)
-	return renderSingleLine(s, cfg)
-}
-
-func renderSingleLine(s *state.State, cfg *config.Config) (string, error) {
-	var parts []string
-
-	// Render all segments
-	for _, seg := range segment.All() {
-		if !seg.Enabled(cfg) {
-			continue
-		}
-
-		text, err := seg.Render(s, cfg)
-		if err != nil {
-			return "", err
-		}
-
-		if text == "" {
-			continue
-		}
-
-		parts = append(parts, text)
-	}
-
-	return joinSegments(parts), nil
+	return renderMultiLine(s, cfg)
 }
 
 func renderMultiLine(s *state.State, cfg *config.Config) (string, error) {
@@ -205,13 +174,8 @@ func renderFileChanges(s *state.State) string {
 
 // joinSegments joins segment outputs with two-space separators
 func joinSegments(segments []string) string {
-	// Filter out empty segments
-	nonEmpty := make([]string, 0, len(segments))
-	for _, seg := range segments {
-		if strings.TrimSpace(seg) != "" {
-			nonEmpty = append(nonEmpty, seg)
-		}
-	}
-
+	nonEmpty := slices.DeleteFunc(slices.Clone(segments), func(s string) bool {
+		return strings.TrimSpace(s) == ""
+	})
 	return strings.Join(nonEmpty, "  │  ")
 }

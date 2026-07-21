@@ -16,8 +16,7 @@ type State struct {
 }
 
 type ModelInfo struct {
-	Name     string
-	PlanType string
+	Name string
 }
 
 type ContextInfo struct {
@@ -32,8 +31,6 @@ type ContextInfo struct {
 }
 
 type RateLimitInfo struct {
-	HourlyUsed       int
-	HourlyTotal      int
 	SevenDayUsed     int
 	SevenDayTotal    int
 	FiveHourPercent  float64 // From OAuth API
@@ -75,31 +72,22 @@ type AgentInfo struct {
 	TaskDesc    string
 }
 
-type Task struct {
-	Subject string
-	Status  string
-}
-
 type TaskInfo struct {
 	Pending    int
 	InProgress int
 	Completed  int
-	Details    []Task
 }
 
 type SessionInfo struct {
-	ID             string
 	TranscriptPath string
 	StartTime      time.Time
-	Duration       time.Duration
 }
 
 type CostInfo struct {
-	TotalUSD      float64
-	DurationMs    int64
-	APIDurationMs int64
-	LinesAdded    int
-	LinesRemoved  int
+	TotalUSD     float64
+	DurationMs   int64
+	LinesAdded   int
+	LinesRemoved int
 }
 
 // New creates a new State with initialized maps
@@ -119,11 +107,8 @@ func New() *State {
 	}
 }
 
-// UpdateDerived updates calculated fields like duration and percentage
+// UpdateDerived updates calculated fields like percentage
 func (s *State) UpdateDerived() {
-	// Update session duration
-	s.Session.Duration = time.Since(s.Session.StartTime)
-
 	// Update context percentage
 	if s.Context.TotalTokens > 0 {
 		s.Context.Percentage = float64(s.Context.UsedTokens) / float64(s.Context.TotalTokens) * 100.0

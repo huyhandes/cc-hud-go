@@ -2,147 +2,98 @@ package theme
 
 import "github.com/charmbracelet/lipgloss"
 
-// Macchiato implements the Catppuccin Macchiato theme
-type Macchiato struct{}
-
-func NewMacchiato() *Macchiato {
-	return &Macchiato{}
+// catppuccin is the single concrete theme type. All four flavors share the
+// same shape; only the color map differs.
+type catppuccin struct {
+	name   string
+	colors map[string]string
 }
 
-func (m *Macchiato) Name() string {
-	return "macchiato"
-}
+func (c *catppuccin) Name() string { return c.name }
 
-func (m *Macchiato) GetColor(semantic string) lipgloss.Color {
-	colors := map[string]string{
-		// Status colors
-		"success": "#a6da95", // Green
-		"warning": "#eed49f", // Yellow
-		"danger":  "#ed8796", // Red
-
-		// Flow colors
-		"input":  "#8aadf4", // Blue
-		"output": "#8bd5ca", // Teal
-
-		// Cache colors
-		"cacheRead":  "#c6a0f6", // Mauve
-		"cacheWrite": "#f5bde6", // Pink
-
-		// Primary UI colors
-		"primary":   "#c6a0f6", // Mauve
-		"highlight": "#91d7e3", // Sky
-		"accent":    "#f5a97f", // Peach
-
-		// Utility colors
-		"muted":  "#5b6078", // Overlay0
-		"bright": "#cad3f5", // Text
-		"info":   "#8bd5ca", // Teal
-	}
-
-	if color, ok := colors[semantic]; ok {
+func (c *catppuccin) GetColor(semantic string) lipgloss.Color {
+	if color, ok := c.colors[semantic]; ok {
 		return lipgloss.Color(color)
 	}
-	return lipgloss.Color("#cad3f5") // default to text color
+	return lipgloss.Color(c.colors["bright"])
 }
 
-// Mocha theme
-type Mocha struct{}
-
-func NewMocha() *Mocha {
-	return &Mocha{}
+func NewMacchiato() *catppuccin {
+	return &catppuccin{name: "macchiato", colors: catppuccinMacchiato}
 }
 
-func (m *Mocha) Name() string {
-	return "mocha"
+func NewMocha() *catppuccin {
+	return &catppuccin{name: "mocha", colors: catppuccinMocha}
 }
 
-func (m *Mocha) GetColor(semantic string) lipgloss.Color {
-	colors := map[string]string{
-		"success":    "#a6e3a1", // Green
-		"warning":    "#f9e2af", // Yellow
-		"danger":     "#f38ba8", // Red
-		"input":      "#89b4fa", // Blue
-		"output":     "#94e2d5", // Teal
-		"cacheRead":  "#cba6f7", // Mauve
-		"cacheWrite": "#f5c2e7", // Pink
-		"primary":    "#cba6f7", // Mauve
-		"highlight":  "#89dceb", // Sky
-		"accent":     "#fab387", // Peach
-		"muted":      "#585b70", // Overlay0
-		"bright":     "#cdd6f4", // Text
-		"info":       "#94e2d5", // Teal
-	}
-
-	if color, ok := colors[semantic]; ok {
-		return lipgloss.Color(color)
-	}
-	return lipgloss.Color("#cdd6f4")
+func NewFrappe() *catppuccin {
+	return &catppuccin{name: "frappe", colors: catppuccinFrappe}
 }
 
-// Frappe theme
-type Frappe struct{}
-
-func NewFrappe() *Frappe {
-	return &Frappe{}
+func NewLatte() *catppuccin {
+	return &catppuccin{name: "latte", colors: catppuccinLatte}
 }
 
-func (f *Frappe) Name() string {
-	return "frappe"
+var catppuccinMacchiato = map[string]string{
+	"success":    "#a6da95",
+	"warning":    "#eed49f",
+	"danger":     "#ed8796",
+	"input":      "#8aadf4",
+	"output":     "#8bd5ca",
+	"cacheRead":  "#c6a0f6",
+	"cacheWrite": "#f5bde6",
+	"primary":    "#c6a0f6",
+	"highlight":  "#91d7e3",
+	"accent":     "#f5a97f",
+	"muted":      "#5b6078",
+	"bright":     "#cad3f5",
+	"info":       "#8bd5ca",
 }
 
-func (f *Frappe) GetColor(semantic string) lipgloss.Color {
-	colors := map[string]string{
-		"success":    "#a6d189", // Green
-		"warning":    "#e5c890", // Yellow
-		"danger":     "#e78284", // Red
-		"input":      "#8caaee", // Blue
-		"output":     "#81c8be", // Teal
-		"cacheRead":  "#ca9ee6", // Mauve
-		"cacheWrite": "#f4b8e4", // Pink
-		"primary":    "#ca9ee6", // Mauve
-		"highlight":  "#99d1db", // Sky
-		"accent":     "#ef9f76", // Peach
-		"muted":      "#51576d", // Overlay0
-		"bright":     "#c6d0f5", // Text
-		"info":       "#81c8be", // Teal
-	}
-
-	if color, ok := colors[semantic]; ok {
-		return lipgloss.Color(color)
-	}
-	return lipgloss.Color("#c6d0f5")
+var catppuccinMocha = map[string]string{
+	"success":    "#a6e3a1",
+	"warning":    "#f9e2af",
+	"danger":     "#f38ba8",
+	"input":      "#89b4fa",
+	"output":     "#94e2d5",
+	"cacheRead":  "#cba6f7",
+	"cacheWrite": "#f5c2e7",
+	"primary":    "#cba6f7",
+	"highlight":  "#89dceb",
+	"accent":     "#fab387",
+	"muted":      "#585b70",
+	"bright":     "#cdd6f4",
+	"info":       "#94e2d5",
 }
 
-// Latte theme
-type Latte struct{}
-
-func NewLatte() *Latte {
-	return &Latte{}
+var catppuccinFrappe = map[string]string{
+	"success":    "#a6d189",
+	"warning":    "#e5c890",
+	"danger":     "#e78284",
+	"input":      "#8caaee",
+	"output":     "#81c8be",
+	"cacheRead":  "#ca9ee6",
+	"cacheWrite": "#f4b8e4",
+	"primary":    "#ca9ee6",
+	"highlight":  "#99d1db",
+	"accent":     "#ef9f76",
+	"muted":      "#51576d",
+	"bright":     "#c6d0f5",
+	"info":       "#81c8be",
 }
 
-func (l *Latte) Name() string {
-	return "latte"
-}
-
-func (l *Latte) GetColor(semantic string) lipgloss.Color {
-	colors := map[string]string{
-		"success":    "#40a02b", // Green
-		"warning":    "#df8e1d", // Yellow
-		"danger":     "#d20f39", // Red
-		"input":      "#1e66f5", // Blue
-		"output":     "#179299", // Teal
-		"cacheRead":  "#8839ef", // Mauve
-		"cacheWrite": "#ea76cb", // Pink
-		"primary":    "#8839ef", // Mauve
-		"highlight":  "#04a5e5", // Sky
-		"accent":     "#fe640b", // Peach
-		"muted":      "#9ca0b0", // Overlay0
-		"bright":     "#4c4f69", // Text
-		"info":       "#179299", // Teal
-	}
-
-	if color, ok := colors[semantic]; ok {
-		return lipgloss.Color(color)
-	}
-	return lipgloss.Color("#4c4f69")
+var catppuccinLatte = map[string]string{
+	"success":    "#40a02b",
+	"warning":    "#df8e1d",
+	"danger":     "#d20f39",
+	"input":      "#1e66f5",
+	"output":     "#179299",
+	"cacheRead":  "#8839ef",
+	"cacheWrite": "#ea76cb",
+	"primary":    "#8839ef",
+	"highlight":  "#04a5e5",
+	"accent":     "#fe640b",
+	"muted":      "#9ca0b0",
+	"bright":     "#4c4f69",
+	"info":       "#179299",
 }

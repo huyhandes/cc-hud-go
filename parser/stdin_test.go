@@ -134,14 +134,6 @@ func TestParseStdinWithRateLimits(t *testing.T) {
 		t.Fatalf("ParseStdin failed: %v", err)
 	}
 
-	if s.RateLimits.HourlyUsed != 10 {
-		t.Errorf("expected HourlyUsed 10, got %d", s.RateLimits.HourlyUsed)
-	}
-
-	if s.RateLimits.HourlyTotal != 50 {
-		t.Errorf("expected HourlyTotal 50, got %d", s.RateLimits.HourlyTotal)
-	}
-
 	if s.RateLimits.SevenDayUsed != 450 {
 		t.Errorf("expected SevenDayUsed 450, got %d", s.RateLimits.SevenDayUsed)
 	}
@@ -218,9 +210,6 @@ func TestParseStdinWithCost(t *testing.T) {
 	if s.Cost.DurationMs != 120000 {
 		t.Errorf("expected duration 120000, got %d", s.Cost.DurationMs)
 	}
-	if s.Cost.APIDurationMs != 90000 {
-		t.Errorf("expected api duration 90000, got %d", s.Cost.APIDurationMs)
-	}
 	if s.Cost.LinesAdded != 100 {
 		t.Errorf("expected 100 lines added, got %d", s.Cost.LinesAdded)
 	}
@@ -253,7 +242,7 @@ func TestParseStdinNilOptionalFields(t *testing.T) {
 	if s.Agents.ActiveAgent != "" {
 		t.Error("expected no agent when agent field is nil")
 	}
-	if s.RateLimits.HourlyTotal != 0 {
+	if s.RateLimits.SevenDayTotal != 0 {
 		t.Error("expected zero rate limits when field is nil")
 	}
 	// Without current_usage, UsedTokens should fallback to TotalInputTokens

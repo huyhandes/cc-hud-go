@@ -1,6 +1,8 @@
 package segment
 
 import (
+	"strings"
+
 	"github.com/huyhandes/cc-hud-go/config"
 	"github.com/huyhandes/cc-hud-go/format"
 	"github.com/huyhandes/cc-hud-go/state"
@@ -22,7 +24,7 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 		return "", nil
 	}
 
-	parts := []string{}
+	var parts []string
 
 	if st.Cost.TotalUSD > 0 {
 		costStyle := style.GetRenderer().NewStyle().Foreground(style.ColorAccent).Bold(true)
@@ -34,21 +36,5 @@ func (s CostSegment) Render(st *state.State, cfg *config.Config) (string, error)
 		parts = append(parts, durationStyle.Render("⏱ "+format.Duration(st.Cost.DurationMs)))
 	}
 
-	// File changes moved to git line in multi-line layout
-	// (removed from here to avoid duplication)
-
-	if len(parts) == 0 {
-		return "", nil
-	}
-
-	// Join with separator for better visual separation
-	result := ""
-	for i, part := range parts {
-		if i > 0 {
-			result += "  │  "
-		}
-		result += part
-	}
-
-	return result, nil
+	return strings.Join(parts, "  │  "), nil
 }

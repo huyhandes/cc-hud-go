@@ -99,8 +99,9 @@ func sumSkills(m map[string]state.SkillUsage) int {
 }
 
 func truncate(s string, max int) string {
-	if len(s) <= max {
+	r := []rune(s)
+	if len(r) <= max {
 		return s
 	}
-	return s[:max-3] + "..."
+	return string(r[:max-3]) + "..."
 }

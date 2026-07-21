@@ -21,10 +21,7 @@ func RenderGradientBar(percentage float64, width int) string {
 		percentage = 100
 	}
 
-	filled := int(percentage / 100 * float64(width))
-	if filled > width {
-		filled = width
-	}
+	filled := min(int(percentage/100*float64(width)), width)
 
 	segments := make([]string, 0, width)
 
@@ -92,10 +89,7 @@ func RenderContextBar(usedTokens, totalTokens, width int) string {
 		usedTokens = totalTokens
 	}
 
-	filled := int(float64(usedTokens) / float64(totalTokens) * float64(width))
-	if filled > width {
-		filled = width
-	}
+	filled := min(int(float64(usedTokens)/float64(totalTokens)*float64(width)), width)
 
 	tokensPerCell := float64(totalTokens) / float64(width)
 	segments := make([]string, 0, width)

@@ -64,8 +64,8 @@ func GetStatus() (*Status, error) {
 		return nil, err
 	}
 
-	lines := strings.Split(out.String(), "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(out.String(), "\n")
+	for line := range lines {
 		if len(line) < 3 {
 			continue
 		}
