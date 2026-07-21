@@ -17,52 +17,38 @@ cc-hud-go is a fully functional Go-based statusline tool for Claude Code with co
 ### ✅ Completed Modules
 
 #### Core Components
-- **config/** - Hardcoded default configuration via `Default()`
 - **state/** - Session state tracking with automatic derived fields
-- **parser/** - Dual parsing system (stdin JSON + transcript JSONL)
-- **segment/** - 8 modular display segments
+- **parser/** - Stdin JSON parsing
+- **segment/** - 6 modular display segments
 - **output/** - JSON renderer for Claude Code statusline API
 - **style/** - Lipgloss-based semantic color system
 - **version/** - Smart version detection (git tags, build-time, fallback)
 
 #### Internal Packages
 - **internal/git/** - Git integration via command execution
-- **internal/watcher/** - File watching utilities
+- **internal/oauth/** - OAuth helpers, always fetched (no stdin fallback)
 
-### Segments (8 Total)
+### Segments (6 Total)
 
-All segments implement the `Segment` interface:
+Segments self-gate by returning `""` when they have nothing to show:
 
-1. **ModelSegment** - Claude model and plan type display
-2. **ContextSegment** - Token usage with color-coded thresholds
-3. **GitSegment** - Branch, dirty files, ahead/behind, file stats
-4. **CostSegment** - Cost tracking, duration, code changes
-5. **ToolsSegment** - Tool usage categorization (App/MCP/Skills/Custom)
-6. **TasksSegment** - Task completion progress
-7. **AgentSegment** - Active agent name and current task
-8. **RateLimitSegment** - 7-day API usage tracking
+1. **ModelSegment** - Claude model display
+2. **CavemanSegment** - Caveman mode badge (when active)
+3. **PonytailSegment** - Ponytail mode badge (when active)
+4. **GitSegment** - Branch, dirty files, ahead/behind, file stats
+5. **FiveHourSegment** - 5-hour rate limit tracking
+6. **RateLimitSegment** - 7-day API usage tracking
 
-### Configuration Options
+### Configuration
 
-Hardcoded defaults via `config.Default()`. All features enabled.
-
-#### Display Controls
-All segments can be individually enabled/disabled via `Display` config:
-- model, context, git, tools, agents, tasks, rateLimits, duration
-
-#### Git Options
-- showBranch, showDirty, showAheadBehind, showFileStats
-
-#### Tools Options
-- showSkills, showMCP
+No config file. Opinionated hardcoded defaults. The only user-facing knob is the `--theme` CLI flag (default `macchiato`; values `macchiato`/`mocha`/`frappe`/`latte`). See ADRs 0001 and 0002.
 
 ## Test Coverage
 
 ### Unit Tests
 - ✅ All segments have dedicated test files
-- ✅ Parser tests for stdin and transcript parsing
+- ✅ Parser tests for stdin parsing
 - ✅ State management tests
-- ✅ Config validation tests
 - ✅ Version detection tests
 
 ### Integration Tests
@@ -102,13 +88,13 @@ make clean           # Remove artifacts
 ### User Documentation
 - ✅ README.md - Comprehensive user guide
 - ✅ Installation instructions (binaries, source, go install)
-- ✅ Configuration guide with all options
+- ✅ `--theme` flag configuration
 - ✅ Integration instructions
 - ✅ Development workflow
 
 ### Developer Documentation
-- ✅ CLAUDE.md - Project context for Claude Code
-- ✅ COLOR_SCHEME.md - Semantic color system guide
+- ✅ AGENTS.md - Project context for AI agents
+- ✅ `theme/catppuccin.go` - source of truth for colors
 - ✅ Architecture section in README
 - ✅ Contribution guidelines
 
@@ -129,24 +115,18 @@ make clean           # Remove artifacts
 
 ## File Statistics
 
-- **Total Go files**: 36
-- **Test files**: ~14 (comprehensive coverage)
-- **Packages**: 7 (config, state, parser, segment, output, style, version)
-- **Internal packages**: 2 (git, watcher)
+- **Packages**: state, parser, segment, output, style, theme, version, format
+- **Internal packages**: git, oauth
 
 ## Known Issues / TODOs
 
-### Test Issues
-- [ ] **segment/tasks_test.go** - Test expects simple "2/5" format but actual output uses lipgloss box UI
-- [ ] **segment/tools_test.go** - Test expects "App:" text but actual output uses "📦 App" with box UI
-
-These tests need to be updated to match the current lipgloss-enhanced output format with box borders and styled content.
+None blocking.
 
 ### Missing Items
 - [ ] LICENSE file (referenced in old README but not present)
 
 ### Future Enhancements
-None blocking for v0.1.0
+None blocking.
 
 ## Integration Status
 
@@ -154,7 +134,6 @@ None blocking for v0.1.0
 - ✅ JSON input via stdin
 - ✅ JSON output to stdout
 - ✅ Real-time session data parsing
-- ✅ Transcript file parsing for tool tracking
 
 ### Git Integration
 - ✅ Branch detection
@@ -163,12 +142,10 @@ None blocking for v0.1.0
 - ✅ File statistics (added/modified/deleted)
 
 ### Claude Code Features
-- ✅ Model and plan type display
-- ✅ Context window tracking (input/output/cache)
-- ✅ Tool usage categorization
-- ✅ Task progress tracking
-- ✅ Agent activity monitoring
-- ✅ Rate limit warnings
+- ✅ Model display
+- ✅ Git status
+- ✅ Mode badges (caveman / ponytail)
+- ✅ Rate limit tracking (5h + 7d, via OAuth)
 
 ## Quality Metrics
 
@@ -190,8 +167,9 @@ None blocking for v0.1.0
 
 ### v0.1.0 (Current)
 - Initial release
-- 8 segments with full functionality
-- 3 configuration presets
+- Default-only mode (no config file)
+- `--theme` CLI flag (macchiato/mocha/frappe/latte)
+- 6 segments
 - Smart version detection
 - Comprehensive documentation
 - CI/CD pipeline
