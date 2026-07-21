@@ -33,7 +33,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go-version: ['1.24.2']
+        go-version: ['1.26']
 
     steps:
       - name: Checkout code
@@ -83,12 +83,18 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.2'
+          go-version: '1.26'
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          # Pin a release built with Go 1.26 so it can load this go1.26
+          # module. 'latest' still ships a go1.24-built binary as of
+          # 2026-07, which fails with "Go language version (go1.24) used
+          # to build golangci-lint is lower than the targeted Go version
+          # (1.26)". v7 of the action is required to install v2.x of
+          # golangci-lint.
+          version: v2.12.2
 
   build:
     name: Build
@@ -101,7 +107,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24.2'
+          go-version: '1.26'
 
       - name: Build
         run: go build -v ./...
